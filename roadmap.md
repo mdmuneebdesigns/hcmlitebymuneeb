@@ -2,15 +2,15 @@
 
 Plan approved: `.lovable/plan/hcm-lite-master-architectural-implementation-plan-2026-10-24.md`
 
-## Phase 1 — Foundation (in progress)
-- [ ] Enable Lovable Cloud
-- [ ] Schema migrations (companies, user_roles, departments, designations, leave_types, public_holidays, employees, attendance, attendance_corrections, leave_requests, payroll_runs, payslips, announcements, notifications, audit_logs, ai_logs) + GRANTs + RLS
-- [ ] `has_role()` security-definer function
-- [ ] Email/password auth (enable_email_auth), login/logout/change password
-- [ ] First-run setup wizard (/setup)
-- [ ] Role-based shell + navigation
-- [ ] Judge Reset utility (Admin-only wipe)
-- [ ] Force password change on first sign-in (must_change_password)
+## Phase 1 — Foundation (complete; verified E2E in preview)
+- [x] Enable Lovable Cloud
+- [x] Schema migrations (companies, user_roles, departments, designations, leave_types, public_holidays, employees, attendance, attendance_corrections, leave_requests, payroll_runs, payslips, announcements, notifications, audit_logs, ai_logs) + GRANTs + RLS
+- [x] `has_role()` security-definer function
+- [x] Email/password auth (enable_email_auth), login/logout/change password
+- [x] First-run setup wizard (/setup) — verified: wizard → company + Admin created → login → dashboard
+- [x] Role-based shell + navigation — Admin badge + company name on shell
+- [x] Judge Reset utility (Admin-only wipe) — verified: wipe → empty DB → /setup
+- [x] Force password change on first sign-in (must_change_password)
 
 ## Phase 2 — Core HR
 - [ ] Org setup screens (departments, designations, leave types, holidays, geofence settings)
