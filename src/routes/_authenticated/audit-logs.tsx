@@ -111,7 +111,7 @@ function AuditLogsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-sm">
-                      {log.action} <span className="text-muted-foreground">· {log.entity_type}</span>
+                      {log.action} <span className="text-muted-foreground">· {log.entity}</span>
                       {log.entity_id && <span className="font-mono text-xs text-muted-foreground"> #{log.entity_id.slice(0, 8)}</span>}
                     </CardTitle>
                     <CardDescription>
