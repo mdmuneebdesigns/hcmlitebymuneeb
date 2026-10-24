@@ -84,7 +84,8 @@ describe("payslip math", () => {
     // absence = (1 + 1 + 0.5) × per-day
     expect(p.absenceDeduction).toBeCloseTo((2.5 * 150_000) / 22, 2);
     expect(p.lateDeduction).toBeCloseTo((0.5 * 150_000) / 22, 2);
-    expect(p.tax).toBe(2_500);
+    // gross 150k → annualized 1.8M → slab 1.2M–2.4M: 30k + 15% × 600k = 120k → /12 = 10k
+    expect(p.tax).toBe(10_000);
     expect(p.netPay).toBeCloseTo(p.gross - p.absenceDeduction - p.lateDeduction - p.tax, 2);
     expect(p.netPay).toBeGreaterThan(0);
   });
