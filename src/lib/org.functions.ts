@@ -52,9 +52,6 @@ export interface OrgData {
 
 type WriteResult = { ok: true } | { ok: false; error: string };
 
-function isAdmin(ctx: AuthedContext, held: string[]): boolean {
-  return held.includes("admin");
-}
 
 // ---------- Reads ----------
 
@@ -511,4 +508,3 @@ function friendly(error: { message: string }, fallback: string): string {
   return fallback;
 }
 
-export const isAdminRole = (roles: string[]): boolean => isAdmin({ supabase: null as never, userId: "" }, roles);
