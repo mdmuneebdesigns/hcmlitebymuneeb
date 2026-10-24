@@ -73,8 +73,11 @@ function LeavesPage() {
     })();
   }, [listFn, inboxFn, isPrivileged]);
 
-  async function prefill() {
-    if (nlText.trim().length < 5) return toast.error("Type your leave request first");
+  async function prefill(): Promise<void> {
+    if (nlText.trim().length < 5) {
+      toast.error("Type your leave request first");
+      return;
+    }
     setNlBusy(true);
     try {
       const res = await parseLeaveText({ data: { text: nlText } });
@@ -98,9 +101,12 @@ function LeavesPage() {
     }
   }
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    if (!leaveTypeId || !startDate || !endDate) return toast.error("Select leave type and dates");
+    if (!leaveTypeId || !startDate || !endDate) {
+      toast.error("Select leave type and dates");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await applyLeave({ data: { leaveTypeId, startDate, endDate, reason } });
@@ -121,20 +127,26 @@ function LeavesPage() {
     }
   }
 
-  async function cancel(id: string) {
+  async function cancel(id: string): Promise<void> {
     const res = await cancelLeave({ data: { id } });
-    if (!res.ok) return toast.error(res.error);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
     toast.success("Request cancelled");
     setMyLeaves(await listFn());
     const bal = await getMyLeaveBalances();
     setBalances(bal.balances);
   }
 
-  async function decide(id: string, d: "approved" | "rejected") {
+  async function decide(id: string, d: "approved" | "rejected"): Promise<void> {
     const res = await decideLeave({ data: { id, decision: d, comment: decisionComment } });
     setDecisionFor(null);
     setDecisionComment("");
-    if (!res.ok) return toast.error(res.error);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
     toast.success(`Request ${d}`);
     setInbox(await inboxFn());
     router.invalidate();
