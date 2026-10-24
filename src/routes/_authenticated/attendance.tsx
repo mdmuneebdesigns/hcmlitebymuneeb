@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -114,7 +115,7 @@ function AttendancePage() {
       <header className="border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <h1 className="text-lg font-semibold text-foreground">Attendance</h1>
-          <Button variant="ghost" size="sm" asChild><a href="/dashboard">Dashboard</a></Button>
+          <Button variant="ghost" size="sm" asChild><Link to="/dashboard">Dashboard</Link></Button>
         </div>
       </header>
 

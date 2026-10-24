@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -58,8 +59,9 @@ function OrgPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <h1 className="text-lg font-semibold text-foreground">Organization setup</h1>
           <Button variant="ghost" size="sm" asChild>
-            <a href="/dashboard">Back to dashboard</a>
+            <Link to="/dashboard">Back to dashboard</Link>
           </Button>
+
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">
