@@ -29,6 +29,7 @@ export interface TrendPoint {
 }
 
 export interface DepartmentPoint {
+  id: string | null;
   name: string;
   headcount: number;
   attendanceRate: number;
@@ -234,18 +235,21 @@ export const getOrgDashboard = createServerFn({ method: "POST" })
     const trend = buildTrend(from, to, attendance, paidLeaveByEmp, org.weekendDays, org.holidays, employeeList);
 
     // Department breakdown
-    const deptMap = new Map<string, { headcount: number; credits: number; expected: number }>();
+    const deptMap = new Map<string, { id: string | null; name: string; headcount: number; credits: number; expected: number }>();
     for (const e of employeeList) {
+      const id = (e as { department_id: string | null }).department_id ?? null;
       const name = e.departments?.name ?? "Unassigned";
-      const s = deptMap.get(name) ?? { headcount: 0, credits: 0, expected: 0 };
+      const key = id ?? `unassigned:${name}`;
+      const s = deptMap.get(key) ?? { id, name, headcount: 0, credits: 0, expected: 0 };
       s.headcount += 1;
       const st = byEmp.get(e.id) ?? { present: 0, late: 0, half: 0, other: 0 };
       s.credits += st.present + 0.5 * st.half + (paidLeaveByEmp.get(e.id) ?? 0);
       s.expected += 1; // per-employee slot; rate normalized below
-      deptMap.set(name, s);
+      deptMap.set(key, s);
     }
-    const departments: DepartmentPoint[] = [...deptMap.entries()].map(([name, s]) => ({
-      name,
+    const departments: DepartmentPoint[] = [...deptMap.entries()].map(([, s]) => ({
+      id: s.id,
+      name: s.name,
       headcount: s.headcount,
       attendanceRate: pct(s.credits, Math.max(1, s.expected * workingDaysInRange)),
     }));
@@ -343,10 +347,10 @@ function buildTrend(
   const expectedByBucket = new Array(bucketCount).fill(0) as number[];
   for (const a of attendance) {
     const i = idxOf(a.work_date);
-    if (a.status === "present" || a.status === "missing_checkout") presentByBucket[i] += 1;
-    if (a.status === "late") presentByBucket[i] += 1;
+    if (a.status === "present" || a.status === "missing_checkout") presentByBucket[i]! += 1;
+    if (a.status === "late") presentByBucket[i]! += 1;
     if (a.status === "late") buckets[i]!.late += 1;
-    if (a.status === "half_day") presentByBucket[i] += 0.5;
+    if (a.status === "half_day") presentByBucket[i]! += 0.5;
   }
   for (const [empId, days] of paidLeaveByEmp) {
     void empId;
@@ -357,7 +361,7 @@ function buildTrend(
     const iso = d.toISOString().slice(0, 10);
     const day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][d.getUTCDay()] as string;
     if (weekendDays.includes(day) || holidays.includes(iso)) continue;
-    expectedByBucket[idxOf(iso)] += employees.length;
+    expectedByBucket[idxOf(iso)]! += employees.length;
   }
   buckets.forEach((b, i) => {
     b.present = Math.round(presentByBucket[i]! * 10) / 10;
