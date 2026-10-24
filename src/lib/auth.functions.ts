@@ -24,16 +24,20 @@ export const getMe = createServerFn({ method: "GET" })
 
     const { data: userData } = await supabase.auth.getUser();
     const email = userData.user?.email ?? "";
+    // HR/Admin logins have no employees row — their temporary-password flag
+    // lives on auth user_metadata set at creation time.
+    const metaFlag = userData.user?.user_metadata?.["must_change_password"] === true;
 
     return {
       userId,
       email,
       roles: (roleRows ?? []).map((r) => r.role as string),
-      mustChangePassword: empRow?.must_change_password ?? false,
+      mustChangePassword: empRow?.must_change_password === true || metaFlag,
       employeeId: empRow?.id ?? null,
       fullName: empRow?.full_name ?? null,
     };
   });
+
 
 // Called right after the user changes their own password, so the
 // "temporary password" flag set by HR/Admin is cleared.
@@ -46,5 +50,10 @@ export const clearMustChangePassword = createServerFn({ method: "POST" })
       .update({ must_change_password: false })
       .eq("user_id", context.userId);
     if (error) throw new Error("Could not update your profile");
+    // HR/Admin logins carry the flag on auth user_metadata instead.
+    await supabaseAdmin.auth.admin.updateUserById(context.userId, {
+      user_metadata: { must_change_password: false },
+    });
     return { ok: true };
   });
+

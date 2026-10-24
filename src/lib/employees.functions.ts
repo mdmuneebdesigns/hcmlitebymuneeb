@@ -217,13 +217,14 @@ export const createHrLogin = createServerFn({ method: "POST" })
       email,
       password: tempPassword,
       email_confirm: true,
-      user_metadata: { full_name: data.fullName.trim() },
+      user_metadata: { full_name: data.fullName.trim(), must_change_password: true },
     });
     if (createError || !created.user) {
       const msg = createError?.message ?? "";
       if (msg.includes("already")) return { ok: false, error: `Email ${email} is already registered` };
       return { ok: false, error: "Could not create the HR login" };
     }
+
 
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
