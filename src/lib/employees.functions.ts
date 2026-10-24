@@ -54,14 +54,15 @@ export interface CreateEmployeeInput {
   employeeCode: string;
   fullName: string;
   email: string;
-  phone?: string;
-  address?: string;
+  phone?: string | undefined;
+  address?: string | undefined;
   departmentId?: string | null;
   designationId?: string | null;
   joinDate: string;
   basicSalary: number;
-  gender?: string;
+  gender?: string | undefined;
 }
+
 
 export type EmployeeWriteResult =
   | { ok: true; employeeId: string; tempPassword: string }
@@ -413,7 +414,19 @@ export const updateEmployee = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await requireAnyRole(context, "hr", "admin");
 
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      full_name?: string;
+      phone?: string | null;
+      address?: string | null;
+      department_id?: string | null;
+      designation_id?: string | null;
+      basic_salary?: number;
+      status?: string;
+      exit_date?: string | null;
+      gender?: string | null;
+      join_date?: string;
+    } = {};
+
     if (data.fullName !== undefined && data.fullName.trim().length >= 3) patch.full_name = data.fullName.trim();
     if (data.phone !== undefined) patch.phone = data.phone;
     if (data.address !== undefined) patch.address = data.address;

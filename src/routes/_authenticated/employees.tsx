@@ -45,7 +45,7 @@ import {
   listDirectory,
   type DirectoryPage,
 } from "@/lib/employees.functions";
-import { parseCsv, toCsv } from "@/lib/rules/csv-rules";
+import { parseCsv, toCsv, type CsvEmployeeRow } from "@/lib/rules/csv-rules";
 import { getOrgData } from "@/lib/org.functions";
 
 export const Route = createFileRoute("/_authenticated/employees")({
@@ -552,17 +552,19 @@ function CsvImportDialog({
   onImported: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [rows, setRows] = useState<Record<string, string>[] | null>(null);
-  const [report, setReport] = useState<Awaited<ReturnType<typeof dryRunHelper>> | null>(null);
+  const [rows, setRows] = useState<CsvEmployeeRow[] | null>(null);
+  type DryRunOk = Extract<Awaited<ReturnType<typeof csvDryRun>>, { ok: true }>;
+  const [report, setReport] = useState<DryRunOk | null>(null);
   const [running, setRunning] = useState(false);
   const [tempPasswords, setTempPasswords] = useState<Array<{ fullName: string; email: string; tempPassword: string }> | null>(null);
 
   const dryRunFn = useServerFn(csvDryRun);
   const importFn = useServerFn(csvImport);
 
-  async function dryRunHelper(parsed: Record<string, string>[]) {
+  async function dryRunHelper(parsed: CsvEmployeeRow[]) {
     return dryRunFn({ data: { rows: parsed } });
   }
+
 
   async function handleFile(file: File) {
     const text = await file.text();
