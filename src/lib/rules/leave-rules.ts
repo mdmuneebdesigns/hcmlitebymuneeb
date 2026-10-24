@@ -37,6 +37,7 @@ export function workingDaysBetween(
 export interface ExistingLeave {
   start_date: string;
   end_date: string;
+  working_days: number;
 }
 
 /** True when [start,end] overlaps any existing leave range (inclusive). */
@@ -96,10 +97,6 @@ export function usedDaysInYear(approved: ExistingLeave[], year: number): number 
   return approved.reduce((sum, l) => {
     const y = Number(l.start_date.slice(0, 4));
     if (y !== year) return sum;
-    return sum + l.workingDays;
+    return sum + l.working_days;
   }, 0);
-}
-
-export interface ApprovedLeaveWithDays extends ExistingLeave {
-  workingDays: number;
 }
