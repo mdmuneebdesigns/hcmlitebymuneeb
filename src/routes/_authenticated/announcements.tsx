@@ -42,13 +42,19 @@ function AnnouncementsPage() {
       .finally(() => setLoading(false));
   }, [listFn]);
 
-  async function post(e: React.FormEvent) {
+  async function post(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    if (!title.trim()) return toast.error("Give the announcement a title");
+    if (!title.trim()) {
+      toast.error("Give the announcement a title");
+      return;
+    }
     setBusy(true);
     try {
       const res = await createFn({ data: { title, body } });
-      if (!res.ok) return toast.error(res.error);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
       toast.success("Announcement posted — everyone has been notified");
       setTitle("");
       setBody("");
