@@ -273,7 +273,7 @@ function PayrollPage() {
                   </CardContent>
                 </Card>
 
-                {selectedRun && (
+                {selectedRun && selectedRun.run && (
                   <Card>
                     <CardHeader>
                       <CardTitle>

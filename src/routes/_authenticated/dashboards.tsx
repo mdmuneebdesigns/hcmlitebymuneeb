@@ -163,8 +163,8 @@ function DashboardsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All departments</SelectItem>
-                        {data.departments.map((d) => (
-                          <SelectItem key={d.id} value={d.id}>
+                        {data.departments.filter((d) => d.id).map((d) => (
+                          <SelectItem key={d.id} value={d.id ?? d.name}>
                             {d.name}
                           </SelectItem>
                         ))}
