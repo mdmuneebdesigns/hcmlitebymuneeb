@@ -32,7 +32,9 @@ export const listAnnouncements = createServerFn({ method: "GET" })
         .from("employees")
         .select("user_id, full_name")
         .in("user_id", authorIds);
-      for (const e of emps ?? []) nameMap.set(e.user_id, e.full_name);
+      for (const e of emps ?? []) {
+        if (e.user_id) nameMap.set(e.user_id, e.full_name);
+      }
     }
     return rows.map((r) => ({
       id: r.id,
@@ -113,8 +115,8 @@ export interface AuditLogDto {
   action: string;
   entity: string;
   entity_id: string | null;
-  before_json: unknown;
-  after_json: unknown;
+  before_json: Record<string, unknown> | null;
+  after_json: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -135,5 +137,5 @@ export const listAuditLogs = createServerFn({ method: "POST" })
     }
     const { data: rows, error } = await q;
     if (error) throw new Error("Could not load audit logs");
-    return (rows as AuditLogDto[]) ?? [];
+    return (rows as unknown as AuditLogDto[]) ?? [];
   });
