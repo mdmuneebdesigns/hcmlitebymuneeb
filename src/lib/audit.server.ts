@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
+
 
 export interface AuditEntry {
   actorId: string;
@@ -26,8 +27,9 @@ export async function writeAudit(
     action: entry.action,
     entity: entry.entity,
     entity_id: entry.entityId ?? null,
-    before_json: entry.before ?? null,
-    after_json: entry.after ?? null,
+    before_json: (entry.before ?? null) as Json,
+    after_json: (entry.after ?? null) as Json,
   });
+
   if (error) console.error("[audit] insert failed:", error.message);
 }

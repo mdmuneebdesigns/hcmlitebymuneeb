@@ -286,31 +286,46 @@ export const listDirectory = createServerFn({ method: "POST" })
     if (error) throw new Error("Could not load the employee directory");
 
     return {
-      rows: (rows ?? []).map(mapDirectoryRow),
+      rows: (rows ?? []).map((r) => mapDirectoryRow(r as unknown as EmployeeRowBase)),
       total: count ?? 0,
       page,
       pageSize,
     };
+
   });
 
-function mapDirectoryRow(r: Record<string, unknown>): DirectoryRow {
-  const departments = r.departments as { name: string } | null;
-  const designations = r.designations as { name: string } | null;
+interface EmployeeRowBase {
+  id: string;
+  employee_code: string;
+  full_name: string;
+  email: string;
+  status: string;
+  basic_salary: number;
+  join_date: string;
+  phone: string | null;
+  address: string | null;
+  gender: string | null;
+  departments: { name: string } | null;
+  designations: { name: string } | null;
+}
+
+function mapDirectoryRow(r: EmployeeRowBase): DirectoryRow {
   return {
-    id: r.id as string,
-    employee_code: r.employee_code as string,
-    full_name: r.full_name as string,
-    email: r.email as string,
-    status: r.status as string,
-    basic_salary: r.basic_salary as number,
-    join_date: r.join_date as string,
-    phone: (r.phone as string | null) ?? null,
-    address: (r.address as string | null) ?? null,
-    gender: (r.gender as string | null) ?? null,
-    department_name: departments?.name ?? null,
-    designation_name: designations?.name ?? null,
+    id: r.id,
+    employee_code: r.employee_code,
+    full_name: r.full_name,
+    email: r.email,
+    status: r.status,
+    basic_salary: r.basic_salary,
+    join_date: r.join_date,
+    phone: r.phone,
+    address: r.address,
+    gender: r.gender,
+    department_name: r.departments?.name ?? null,
+    designation_name: r.designations?.name ?? null,
   };
 }
+
 
 
 // ---------- Employee 360 (own via RLS; HR/Admin anyone) ----------
@@ -334,8 +349,14 @@ export const getEmployee360 = createServerFn({ method: "POST" })
     if (error) throw new Error("Could not load the employee profile");
     if (!emp) throw new Error("Employee not found — you do not have access to this profile");
 
-    const rec = emp as unknown as Record<string, unknown> & { departments: { name: string } | null; designations: { name: string } | null };
-    const base = mapDirectoryRow(rec as unknown as Record<string, unknown>);
+    const rec = emp as unknown as EmployeeRowBase & {
+      user_id: string | null;
+      exit_date: string | null;
+      department_id: string | null;
+      designation_id: string | null;
+    };
+    const base = mapDirectoryRow(rec);
+
 
     const { data: attendanceRows } = await supabase
       .from("attendance")
@@ -439,19 +460,30 @@ export const updateEmployee = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-function pickAuditFields(row: Record<string, unknown>): Record<string, unknown> {
+function pickAuditFields(row: {
+  full_name: string;
+  phone: string | null;
+  address: string | null;
+  department_id: string | null;
+  designation_id: string | null;
+  basic_salary: number;
+  status: string;
+  exit_date: string | null;
+  join_date: string;
+}): Record<string, unknown> {
   return {
-    full_name: row.full_name ?? null,
-    phone: row.phone ?? null,
-    address: row.address ?? null,
-    department_id: row.department_id ?? null,
-    designation_id: row.designation_id ?? null,
-    basic_salary: row.basic_salary ?? null,
-    status: row.status ?? null,
-    exit_date: row.exit_date ?? null,
-    join_date: row.join_date ?? null,
+    full_name: row.full_name,
+    phone: row.phone,
+    address: row.address,
+    department_id: row.department_id,
+    designation_id: row.designation_id,
+    basic_salary: row.basic_salary,
+    status: row.status,
+    exit_date: row.exit_date,
+    join_date: row.join_date,
   };
 }
+
 
 // ---------- Employee edits own phone/address only ----------
 
