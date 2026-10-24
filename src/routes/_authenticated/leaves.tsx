@@ -1,7 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CalendarDays, Building2, LogOut, Loader2, LogOut as LogOutIcon, Sparkles, Trash2 } from "lucide-react";
+import { CalendarDays, Building2, Loader2, LogOut, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -351,5 +351,3 @@ function LeavesPage() {
     </div>
   );
 }
-
-void LogOut;
