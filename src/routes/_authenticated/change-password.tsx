@@ -27,9 +27,11 @@ export const Route = createFileRoute("/_authenticated/change-password")({
 function ChangePasswordPage() {
   const navigate = useNavigate();
   const me = Route.useLoaderData();
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,12 +44,20 @@ function ChangePasswordPage() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+      current_password: currentPassword,
+    });
     if (error) {
-      toast.error(error.message);
+      toast.error(
+        error.message.includes("current_password")
+          ? "Your current password is incorrect"
+          : error.message,
+      );
       setLoading(false);
       return;
     }
+
     if (me.mustChangePassword) {
       try {
         await clearMustChangePassword();
@@ -76,7 +86,19 @@ function ChangePasswordPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="currentPassword">Current password</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="newPassword">New password</Label>
+
               <Input
                 id="newPassword"
                 type="password"
