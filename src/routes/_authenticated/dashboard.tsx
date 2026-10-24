@@ -61,11 +61,12 @@ function DashboardPage() {
       toast.error(result.error);
       return;
     }
-    toast.success("Database wiped — returning to first-run setup");
+    // The signing account no longer exists; clear state and hard-reload into
+    // the public setup route so no stale session redirect can win the race.
     await queryClient.cancelQueries();
     queryClient.clear();
-    await supabase.auth.signOut();
-    router.navigate({ to: "/setup", replace: true });
+    supabase.auth.signOut().catch(() => undefined);
+    window.location.replace("/setup");
   }
 
   const isEmployee = !me.roles.includes("admin") && !me.roles.includes("hr");
