@@ -71,10 +71,10 @@ function DashboardsPage() {
     (async () => {
       try {
         if (isPrivileged) {
-          const res = await orgFn({ data: { from: from || undefined, to: to || undefined, departmentId: department === "all" ? undefined : department } });
+          const res = await orgFn({ data: { from: from || null, to: to || null, departmentId: department === "all" ? null : department } });
           setData(res);
         } else {
-          setMyData(await myFn());
+          setMyData(await myFn({ data: {} }));
         }
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not load dashboard");
@@ -89,10 +89,10 @@ function DashboardsPage() {
     try {
       if (isPrivileged) {
         setData(
-          await orgFn({ data: { from: from || undefined, to: to || undefined, departmentId: department === "all" ? undefined : department } }),
+          await orgFn({ data: { from: from || null, to: to || null, departmentId: department === "all" ? null : department } }),
         );
       } else {
-        setMyData(await myFn());
+        setMyData(await myFn({ data: {} }));
       }
     } finally {
       setLoading(false);
