@@ -93,11 +93,14 @@ function PayrollPage() {
     router.invalidate();
   }
 
-  async function runDraft() {
+  async function runDraft(): Promise<void> {
     setBusy(true);
     try {
       const res = await draftFn({ data: { year: Number(year), month: Number(month) } });
-      if (!res.ok) return toast.error(res.error);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
       toast.success(`Draft payroll created — ${res.employees} payslip(s), net total PKR ${res.totalNet.toLocaleString()}`);
       await refreshRuns();
     } finally {
@@ -105,11 +108,14 @@ function PayrollPage() {
     }
   }
 
-  async function finalize(runId: string) {
+  async function finalize(runId: string): Promise<void> {
     setBusy(true);
     try {
       const res = await finalizeFn({ data: { runId } });
-      if (!res.ok) return toast.error(res.error);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
       toast.success("Payroll finalized and locked. Employees have been notified.");
       await refreshRuns();
     } finally {
@@ -117,10 +123,13 @@ function PayrollPage() {
     }
   }
 
-  async function downloadPdf(runId: string, employeeId?: string) {
+  async function downloadPdf(runId: string, employeeId?: string): Promise<void> {
     try {
       const res = await pdfFn({ data: { runId, employeeId } });
-      if (!res.ok) return toast.error(res.error);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
       const bin = atob(res.base64);
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
