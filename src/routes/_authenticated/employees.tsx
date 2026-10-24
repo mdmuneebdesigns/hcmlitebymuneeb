@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -62,7 +63,9 @@ const PAGE_SIZE = 10;
 
 function EmployeesPage() {
   const me = Route.useLoaderData() as Me;
+  const navigate = useNavigate();
   const qc = useQueryClient();
+
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -238,7 +241,7 @@ function EmployeesPage() {
                   </TableRow>
                 )}
                 {data?.rows.map((r) => (
-                  <TableRow key={r.id} className="cursor-pointer" onClick={() => window.location.assign(`/employees/${r.id}`)}>
+                  <TableRow key={r.id} className="cursor-pointer" onClick={() => navigate({ to: "/employees/$id", params: { id: r.id } })}>
                     <TableCell className="font-mono text-xs">{r.employee_code}</TableCell>
                     <TableCell className="font-medium">{r.full_name}</TableCell>
                     <TableCell className="text-muted-foreground">{r.email}</TableCell>
