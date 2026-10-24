@@ -15,7 +15,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authenticated/employees'
 import { Route as AuthenticatedOrgRouteImport } from './routes/_authenticated/org'
+import { Route as AuthenticatedEmployeesIdRouteImport } from './routes/_authenticated/employees.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -47,11 +49,22 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEmployeesRoute = AuthenticatedEmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOrgRoute = AuthenticatedOrgRouteImport.update({
   id: '/org',
   path: '/org',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEmployeesIdRoute =
+  AuthenticatedEmployeesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedEmployeesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,7 +72,9 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/employees': typeof AuthenticatedEmployeesRouteWithChildren
   '/org': typeof AuthenticatedOrgRoute
+  '/employees/$id': typeof AuthenticatedEmployeesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -67,7 +82,9 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/employees': typeof AuthenticatedEmployeesRouteWithChildren
   '/org': typeof AuthenticatedOrgRoute
+  '/employees/$id': typeof AuthenticatedEmployeesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,14 +94,31 @@ export interface FileRoutesById {
   '/setup': typeof SetupRoute
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/employees': typeof AuthenticatedEmployeesRouteWithChildren
   '/_authenticated/org': typeof AuthenticatedOrgRoute
+  '/_authenticated/employees/$id': typeof AuthenticatedEmployeesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/setup' | '/change-password' | '/dashboard' | '/org'
+    | '/'
+    | '/auth'
+    | '/setup'
+    | '/change-password'
+    | '/dashboard'
+    | '/employees'
+    | '/org'
+    | '/employees/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/setup' | '/change-password' | '/dashboard' | '/org'
+  to:
+    | '/'
+    | '/auth'
+    | '/setup'
+    | '/change-password'
+    | '/dashboard'
+    | '/employees'
+    | '/org'
+    | '/employees/$id'
   id:
     | '__root__'
     | '/'
@@ -93,7 +127,9 @@ export interface FileRouteTypes {
     | '/setup'
     | '/_authenticated/change-password'
     | '/_authenticated/dashboard'
+    | '/_authenticated/employees'
     | '/_authenticated/org'
+    | '/_authenticated/employees/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -147,6 +183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/employees': {
+      id: '/_authenticated/employees'
+      path: '/employees'
+      fullPath: '/employees'
+      preLoaderRoute: typeof AuthenticatedEmployeesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/org': {
       id: '/_authenticated/org'
       path: '/org'
@@ -154,18 +197,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/employees/$id': {
+      id: '/_authenticated/employees/$id'
+      path: '/$id'
+      fullPath: '/employees/$id'
+      preLoaderRoute: typeof AuthenticatedEmployeesIdRouteImport
+      parentRoute: typeof AuthenticatedEmployeesRoute
+    }
   }
 }
+
+interface AuthenticatedEmployeesRouteChildren {
+  AuthenticatedEmployeesIdRoute: typeof AuthenticatedEmployeesIdRoute
+}
+
+const AuthenticatedEmployeesRouteChildren: AuthenticatedEmployeesRouteChildren =
+  {
+    AuthenticatedEmployeesIdRoute: AuthenticatedEmployeesIdRoute,
+  }
+
+const AuthenticatedEmployeesRouteWithChildren =
+  AuthenticatedEmployeesRoute._addFileChildren(
+    AuthenticatedEmployeesRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEmployeesRoute: typeof AuthenticatedEmployeesRouteWithChildren
   AuthenticatedOrgRoute: typeof AuthenticatedOrgRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChangePasswordRoute: AuthenticatedChangePasswordRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedEmployeesRoute: AuthenticatedEmployeesRouteWithChildren,
   AuthenticatedOrgRoute: AuthenticatedOrgRoute,
 }
 
