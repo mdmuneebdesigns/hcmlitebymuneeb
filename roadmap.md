@@ -23,16 +23,17 @@ Plan approved: `.lovable/plan/hcm-lite-master-architectural-implementation-plan-
 - [x] Audit logging on every create/update/approve (before/after JSON) — verified rows in `audit_logs`
 - [x] Tests: 27 unit tests (attendance rules: PKT stamping, late/half-day/weekend, Haversine, day-board status; CSV rules: full dry-run matrix, parse/export) — all passing
 
-## Phase 3 — Leave, Payroll, Dashboards, Audit
-- [ ] Leave apply/balance/overlap 422 + HR approval inbox
-- [ ] Payroll draft run (Gross=1.5×basic, deductions, 3 lates=0.5 day, tax slabs, proration)
-- [ ] Admin finalize/lock; payslip PDF download
-- [ ] Role dashboards (Recharts) + date/dept filters; attrition + anomaly flags
-- [ ] Announcements, notifications, audit log viewer
+## Phase 3 — Leave, Payroll, Dashboards, Audit (code complete; E2E verification pending)
+- [x] Leave apply/balance/overlap 422 + HR approval inbox (`/leaves`, leave-rules tests)
+- [x] Payroll draft run (Gross=1.5×basic, deductions, late penalty, tax slabs, proration) (`/payroll`, payroll-rules tests)
+- [x] Admin finalize/lock; payslip PDF download (pdf-lib, per-employee or per-run)
+- [x] Role dashboards (Recharts) + date/dept filters; attrition + anomaly flags (`/dashboards`)
+- [x] Announcements, notification bell, audit log viewer (`/announcements`, `/audit-logs`)
 
-## Phase 4 — AI + Camera
-- [ ] AI Gateway integration + scoped tool-calling chat
-- [ ] KPI summarizer, smart leave parser (EN + Roman Urdu), policy Q&A
-- [ ] Guardrails: 15s timeout, fallback, rate limit, ai_logs, AI badge
-- [ ] Camera + GPS geofence check-in (face detection, Haversine server-side)
+## Phase 4 — AI + Camera (code complete; E2E verification pending)
+- [x] AI Gateway integration + scoped tool-calling chat (`src/lib/ai.functions.ts`, `ai.tools.server.ts`)
+- [x] KPI summarizer, smart leave parser (EN + Roman Urdu), policy Q&A
+- [x] Guardrails: 15s timeout, friendly fallbacks, per-user rate limit, `ai_logs`, AI badge
+- [x] Camera + GPS geofence check-in (FaceDetector, skip option; server-side Haversine; `webcam`/`webcam+gps` check_method)
 - [ ] Dark mode + PWA polish; E2E judge demo script verification
+- [ ] README + .env.example (done) — final credential handoff for judging
