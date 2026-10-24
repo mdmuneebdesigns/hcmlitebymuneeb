@@ -139,15 +139,6 @@ function AuditLogsPage() {
                       </div>
                     </div>
                   )}
-                  {log.metadata_json && (
-                    <div>
-                      <p className="mb-1 text-xs font-medium text-muted-foreground">Metadata</p>
-                      <pre className="max-h-40 overflow-auto rounded-md bg-muted p-3 text-xs">
-                        {JSON.stringify(log.metadata_json, null, 2)}
-                      </pre>
-                    </div>
-                  )}
-                  {log.entity === "" && null}
                 </CardContent>
               )}
             </Card>
