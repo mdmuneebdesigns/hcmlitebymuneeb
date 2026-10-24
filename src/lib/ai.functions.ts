@@ -81,11 +81,7 @@ Office policy summary (ground truth for answers):
 - Payroll runs are drafted by HR/Admin and finalized/locked by Admin only.
 `.trim();
 
-async function callModel(
-  input: unknown[],
-  instructions: string,
-  useTools: boolean,
-): Promise<Awaited<ReturnType<typeof generateResponse<"responses", typeof MODEL>>>> {
+async function callModel(input: unknown[], instructions: string, useTools: boolean) {
   return generateResponse(
     {
       model: MODEL,
@@ -97,7 +93,7 @@ async function callModel(
   );
 }
 
-function extractText(response: { output: { type: string; content?: { type: string; text?: string }[] }[] }): string {
+function extractText(response: Awaited<ReturnType<typeof callModel>>): string {
   for (const item of response.output) {
     if (item.type === "message" && Array.isArray(item.content)) {
       const text = item.content
@@ -198,10 +194,10 @@ export const aiChat = createServerFn({ method: "POST" })
       success = false;
       if (e instanceof GatewayError) {
         reply =
-          e.code === "rate_limit"
+          e.code === "rate_limited"
             ? "The AI service is busy right now — please try again in a moment."
             : "The AI service is unavailable right now. Please try again shortly.";
-      } else if (e instanceof Error && e.name === "TimeoutError") {
+      } else if (e instanceof GatewayError && e.code === "timeout") {
         reply = "The AI took too long to answer (15s limit). Please try a shorter question.";
       } else {
         reply = "Something went wrong talking to the AI service. Please try again.";
@@ -249,7 +245,7 @@ export const summarizeKpis = createServerFn({ method: "POST" })
     } catch (e) {
       success = false;
       bullets =
-        e instanceof GatewayError && e.code === "rate_limit"
+        e instanceof GatewayError && e.code === "rate_limited"
           ? ["AI service is busy — try again in a moment."]
           : ["AI summarizer is unavailable right now."];
       console.error("[summarizeKpis]", e);
@@ -343,7 +339,7 @@ export const policyAnswer = createServerFn({ method: "POST" })
       answer = extractText(response) || "I could not answer that right now.";
     } catch (e) {
       success = false;
-      answer = e instanceof GatewayError && e.code === "rate_limit"
+      answer = e instanceof GatewayError && e.code === "rate_limited"
         ? "The AI service is busy — please try again in a moment."
         : "The AI service is unavailable right now. Please try again shortly.";
       console.error("[policyAnswer]", e);
