@@ -209,7 +209,7 @@ function LeavesPage() {
                     <Input
                       value={nlText}
                       onChange={(e) => setNlText(e.target.value)}
-                      placeholder='e.g. "Need next Monday and Tuesday off for my sister\'s wedding" ya "Mujhe agle Monday chutti chahiye"'
+                      placeholder='e.g. "Need next Monday and Tuesday off for my sister&apos;s wedding" ya "Mujhe agle Monday chutti chahiye"'
                     />
                     <Button type="button" variant="secondary" onClick={prefill} disabled={nlBusy}>
                       {nlBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Pre-fill
