@@ -132,6 +132,7 @@ export const runPayrollDraft = createServerFn({ method: "POST" })
       if (!Number.isInteger(year) || year < 2000 || year > 2100) return { ok: false, error: "Invalid year" };
       if (!Number.isInteger(month) || month < 1 || month > 12) return { ok: false, error: "Invalid month" };
       const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
+      const monthEnd = `${year}-${String(month).padStart(2, "0")}-${String(new Date(Date.UTC(year, month, 0)).getUTCDate()).padStart(2, "0")}`;
       const nextMonthStart = month === 12
         ? `${year + 1}-01-01`
         : `${year}-${String(month + 1).padStart(2, "0")}-01`;
