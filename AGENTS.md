@@ -18,5 +18,6 @@
 - **Shared UI:** status chips come from `src/components/status-badge.tsx` — do not re-export them from route files.
 - **Temp passwords are system-generated** (crypto-random, mixed classes) and shown once in the UI; never store them beyond the creation response.
 - **AI calls** use `@lovable.dev/ai-gateway` (`generateResponse`, model `openai/gpt-6-astra`, responses surface) inside `src/lib/ai.functions.ts` only; role scoping lives in `src/lib/ai.tools.server.ts` (`AI_TOOLS`), every call is logged to `ai_logs`, 15s timeout, no client-visible secrets.
-- **Payroll/leave writes** follow the same privileged pattern as attendance: role-verified server fn → dynamic `supabaseAdmin` import → `audit_logs` before/after; finalized payroll runs are immutable (no re-run, no delete).
+- **Payroll/leave/announcement writes** follow the same privileged pattern as attendance: role-verified server fn → dynamic `supabaseAdmin` import → `audit_logs` before/after; finalized payroll runs are immutable (no re-run, no delete). Announcements/notifications tables intentionally have no user INSERT RLS policies.
+- **Payroll period rule:** a draft run is allowed for the current month mid-month (pays today's attendance/leave data); only a month that has not started is rejected — see `isFutureMonth()` in `src/lib/rules/payroll-rules.ts` (unit-tested).
 
