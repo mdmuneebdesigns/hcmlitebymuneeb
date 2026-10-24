@@ -159,7 +159,7 @@ function LeavesPage() {
             <span className="text-sm font-semibold text-foreground">Leave Management</span>
           </div>
           <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOutIcon className="h-4 w-4" /> Sign out
+            <LogOut className="h-4 w-4" /> Sign out
           </Button>
         </div>
       </header>
