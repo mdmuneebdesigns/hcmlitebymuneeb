@@ -34,7 +34,7 @@ function AuditLogsPage() {
 
   useEffect(() => {
     if (!isAdmin) return;
-    listFn({ data: { query: "" } })
+    listFn({ data: { search: "" } })
       .then(setLogs)
       .catch(() => toast.error("Could not load audit logs"))
       .finally(() => setLoading(false));
@@ -44,7 +44,7 @@ function AuditLogsPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      setLogs(await listFn({ data: { query } }));
+      setLogs(await listFn({ data: { search: query } }));
     } finally {
       setLoading(false);
     }
