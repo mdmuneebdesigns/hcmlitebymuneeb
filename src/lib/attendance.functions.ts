@@ -354,21 +354,34 @@ export const requestCorrection = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-function mapCorrection(r: Record<string, unknown>): CorrectionRow {
-  const employee = r.employees as { full_name: string } | null;
+interface CorrectionRecordRow {
+  id: string;
+  employee_id: string;
+  work_date: string;
+  field: string;
+  requested_time: string;
+  reason: string;
+  status: string;
+  decision_comment: string | null;
+  created_at: string;
+  employees: { full_name: string } | null;
+}
+
+function mapCorrection(r: CorrectionRecordRow): CorrectionRow {
   return {
-    id: r.id as string,
-    employee_id: r.employee_id as string,
-    employee_name: employee?.full_name ?? null,
-    work_date: r.work_date as string,
-    field: r.field as string,
-    requested_time: r.requested_time as string,
-    reason: r.reason as string,
-    status: r.status as string,
-    decision_comment: r.decision_comment as string | null,
-    created_at: r.created_at as string,
+    id: r.id,
+    employee_id: r.employee_id,
+    employee_name: r.employees?.full_name ?? null,
+    work_date: r.work_date,
+    field: r.field,
+    requested_time: r.requested_time,
+    reason: r.reason,
+    status: r.status,
+    decision_comment: r.decision_comment,
+    created_at: r.created_at,
   };
 }
+
 
 export const listMyCorrections = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -397,7 +410,7 @@ export const listAllCorrections = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error("Could not load correction requests");
-    return (data ?? []).map((r) => mapCorrection(r as unknown as Record<string, unknown>));
+    return (data ?? []).map((r) => mapCorrection(r as unknown as CorrectionRecordRow));
   });
 
 export const decideCorrection = createServerFn({ method: "POST" })
