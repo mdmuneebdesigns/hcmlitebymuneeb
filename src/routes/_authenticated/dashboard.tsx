@@ -149,11 +149,27 @@ function DashboardPage() {
               <CardDescription>Next up</CardDescription>
               <CardTitle className="text-lg">Modules</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p className="flex items-center gap-2">
-                <CalendarCheck2 className="h-4 w-4" /> Attendance, leave, payroll and analytics arrive in the coming build phases.
-              </p>
+            <CardContent className="space-y-2 text-sm">
+              {me.roles.includes("admin") && (
+                <Link to="/org" className="flex items-center gap-2 text-foreground hover:underline">
+                  <Building2 className="h-4 w-4" /> Organization setup
+                </Link>
+              )}
+              {(me.roles.includes("admin") || me.roles.includes("hr")) && (
+                <Link to="/employees" className="flex items-center gap-2 text-foreground hover:underline">
+                  <UserCircle2 className="h-4 w-4" /> Employee directory
+                </Link>
+              )}
+              <Link to="/attendance" className="flex items-center gap-2 text-foreground hover:underline">
+                <CalendarCheck2 className="h-4 w-4" /> Attendance — check in / out
+              </Link>
+              {me.employeeId && (
+                <Link to="/employees/$id" params={{ id: me.employeeId }} className="flex items-center gap-2 text-foreground hover:underline">
+                  <UserCircle2 className="h-4 w-4" /> My profile
+                </Link>
+              )}
             </CardContent>
+
           </Card>
         </div>
 

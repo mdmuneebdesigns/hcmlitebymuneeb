@@ -16,7 +16,11 @@ export interface DirectoryRow {
   designation_name: string | null;
   basic_salary: number;
   join_date: string;
+  phone?: string | null;
+  address?: string | null;
+  gender?: string | null;
 }
+
 
 export interface DirectoryPage {
   rows: DirectoryRow[];
@@ -263,9 +267,10 @@ export const listDirectory = createServerFn({ method: "POST" })
     let query = supabase
       .from("employees")
       .select(
-        "id, employee_code, full_name, email, status, basic_salary, join_date, departments(name), designations(name)",
+        "id, employee_code, full_name, email, status, basic_salary, join_date, phone, address, gender, departments(name), designations(name)",
         { count: "exact" },
       );
+
 
     const search = (data.search ?? "").trim().replace(/[,%()]/g, "");
     if (search) {
@@ -299,10 +304,14 @@ function mapDirectoryRow(r: Record<string, unknown>): DirectoryRow {
     status: r.status as string,
     basic_salary: r.basic_salary as number,
     join_date: r.join_date as string,
+    phone: (r.phone as string | null) ?? null,
+    address: (r.address as string | null) ?? null,
+    gender: (r.gender as string | null) ?? null,
     department_name: departments?.name ?? null,
     designation_name: designations?.name ?? null,
   };
 }
+
 
 // ---------- Employee 360 (own via RLS; HR/Admin anyone) ----------
 
