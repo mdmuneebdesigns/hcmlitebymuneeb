@@ -229,7 +229,7 @@ function PayrollPage() {
                         key={r.id}
                         className={
                           "flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 " +
-                          (selectedRun?.run.id === r.id ? "border-primary" : "")
+                          (selectedRun?.run?.id === r.id ? "border-primary" : "")
                         }
                       >
                         <button className="text-left" onClick={() => runDetailFn({ data: { runId: r.id } }).then(setSelectedRun)}>
