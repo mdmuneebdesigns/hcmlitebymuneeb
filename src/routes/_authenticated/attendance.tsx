@@ -11,6 +11,7 @@ import {
   LogOut,
   Loader2,
   MapPin,
+  Camera,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -268,6 +269,26 @@ function AttendancePage() {
             <CorrectionsTab isManager={isManager} today={today} />
           </TabsContent>
         </Tabs>
+
+        {camOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="w-full max-w-md rounded-xl border bg-background p-4 shadow-2xl">
+              <p className="text-sm font-semibold text-foreground">Face verification</p>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Look straight at the camera, then press verify. Video never leaves your device — nothing is stored or uploaded.
+              </p>
+              <video ref={videoRef} autoPlay muted playsInline className="mx-auto w-full max-w-sm rounded-lg border bg-black" />
+              <div className="mt-3 flex justify-end gap-2">
+                <Button variant="ghost" onClick={skipFace}>
+                  Skip face check
+                </Button>
+                <Button onClick={verifyFaceNow}>
+                  <Camera className="mr-1 h-4 w-4" /> Verify & check in
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
