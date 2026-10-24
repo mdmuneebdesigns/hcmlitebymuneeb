@@ -10,7 +10,7 @@ Plan approved: `.lovable/plan/hcm-lite-master-architectural-implementation-plan-
 - [x] First-run setup wizard (/setup) — verified: wizard → company + Admin created → login → dashboard
 - [x] Role-based shell + navigation — Admin badge + company name on shell
 - [x] Judge Reset utility (Admin-only wipe) — verified: wipe → empty DB → /setup
-- [x] Force password change on first sign-in (must_change_password)
+- [ ] Force password change on first sign-in (must_change_password) — flag handled at login redirect + dashboard warning; global gate pending Phase 2 (when HR temp logins exist)
 
 ## Phase 2 — Core HR
 - [ ] Org setup screens (departments, designations, leave types, holidays, geofence settings)
