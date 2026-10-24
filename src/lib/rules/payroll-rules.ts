@@ -31,6 +31,15 @@ export function monthlyTax(monthlyGross: number): number {
   return round2(annualTax(monthlyGross * 12) / 12);
 }
 
+/**
+ * A payroll month is runnable once it has started — the current month is
+ * allowed mid-month; only a month that has not started yet is "future".
+ */
+export function isFutureMonth(year: number, month: number, nowMs: number): boolean {
+  const startMs = new Date(`${year}-${String(month).padStart(2, "0")}-01T00:00:00Z`).getTime();
+  return startMs > nowMs + 26 * 3600 * 1000;
+}
+
 export function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
