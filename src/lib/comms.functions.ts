@@ -49,7 +49,7 @@ export const createAnnouncement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { title: string; body: string }) => input)
     .handler(async ({ context, data }): Promise<{ ok: true } | { ok: false; error: string }> => {
-      const { userId } = context;
+      const { supabase, userId } = context;
       await requireAnyRole(context, "hr", "admin");
       const title = data.title.trim();
       const body = data.body.trim();
