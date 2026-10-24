@@ -55,6 +55,19 @@ function DashboardPage() {
     router.navigate({ to: "/auth", replace: true });
   }
 
+  async function handleWipe() {
+    const result = await wipeAllData();
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Database wiped — returning to first-run setup");
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    router.navigate({ to: "/setup", replace: true });
+  }
+
   const isEmployee = !me.roles.includes("admin") && !me.roles.includes("hr");
 
   return (
@@ -142,6 +155,39 @@ function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        {me.roles.includes("admin") && (
+          <Card className="border-destructive/40">
+            <CardHeader className="pb-2">
+              <CardDescription>Judge utilities</CardDescription>
+              <CardTitle className="text-lg">Reset to fresh install</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground">
+                Wipes every record and account and restarts the first-run wizard. Use before judging.
+              </p>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <RefreshCcw className="h-4 w-4" /> Wipe database
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Reset everything?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This permanently deletes the company, all employees, attendance, leave, payroll and accounts. You will be returned to the first-run setup wizard.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleWipe}>Yes, wipe database</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );
