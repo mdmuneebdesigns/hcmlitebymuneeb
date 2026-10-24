@@ -115,8 +115,8 @@ export interface AuditLogDto {
   action: string;
   entity: string;
   entity_id: string | null;
-  before_json: Record<string, unknown> | null;
-  after_json: Record<string, unknown> | null;
+  before_json: string | null;
+  after_json: string | null;
   created_at: string;
 }
 
@@ -137,5 +137,12 @@ export const listAuditLogs = createServerFn({ method: "POST" })
     }
     const { data: rows, error } = await q;
     if (error) throw new Error("Could not load audit logs");
-    return (rows as unknown as AuditLogDto[]) ?? [];
+    return (rows ?? []).map((r) => {
+      const row = r as unknown as { id: string; actor_email: string | null; action: string; entity: string; entity_id: string | null; before_json: unknown; after_json: unknown; created_at: string };
+      return {
+        ...row,
+        before_json: row.before_json == null ? null : JSON.stringify(row.before_json, null, 2),
+        after_json: row.after_json == null ? null : JSON.stringify(row.after_json, null, 2),
+      };
+    });
   });
