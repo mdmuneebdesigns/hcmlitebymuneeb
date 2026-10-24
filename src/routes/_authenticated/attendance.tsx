@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { useServerFn } from "@tanstack/react-start";
@@ -68,6 +68,12 @@ function getPosition(): Promise<Geo> {
   });
 }
 
+interface FaceCheckResult {
+  ok: boolean;
+  faceOk: boolean;
+  note?: string;
+}
+
 function AttendancePage() {
   const me = Route.useLoaderData() as Me;
   const isManager = me.roles.includes("hr") || me.roles.includes("admin");
@@ -85,11 +91,94 @@ function AttendancePage() {
   const checkOutFn = useServerFn(checkOut);
   const [busy, setBusy] = useState<"in" | "out" | null>(null);
 
+  // Camera (face) verification for check-in
+  const [faceVerify, setFaceVerify] = useState(true);
+  const [camOpen, setCamOpen] = useState(false);
+  const camResolver = useRef<((r: FaceCheckResult) => void) | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    return () => {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
+
+  async function openCamera(): Promise<FaceCheckResult> {
+    setCamOpen(true);
+    return new Promise<FaceCheckResult>((resolve) => {
+      camResolver.current = resolve;
+      // Start the stream once the <video> element mounts.
+      setTimeout(async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user", width: 480, height: 360 },
+            audio: false,
+          });
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            await videoRef.current.play().catch(() => undefined);
+          }
+        } catch {
+          camResolver.current?.({ ok: false, faceOk: false });
+          camResolver.current = null;
+          setCamOpen(false);
+        }
+      }, 50);
+    });
+  }
+
+  function stopCamera() {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setCamOpen(false);
+  }
+
+  async function verifyFaceNow() {
+    let faceOk = true;
+    let note: string | undefined;
+    const video = videoRef.current;
+    const detector = (window as unknown as { FaceDetector?: new (o?: object) => { detect: (s: unknown) => Promise<{ length: number }> } }).FaceDetector;
+    if (video && detector) {
+      try {
+        const faces = await new detector({ fastMode: true, maxDetectedFaces: 1 }).detect(video);
+        faceOk = faces.length >= 1;
+        if (!faceOk) note = "No face detected — make sure you are in frame";
+      } catch {
+        note = "Face detector could not run — camera frame accepted";
+      }
+    } else {
+      note = "Camera frame accepted (browser face API not available)";
+    }
+    const r: FaceCheckResult = { ok: faceOk, faceOk, note };
+    camResolver.current?.(r);
+    camResolver.current = null;
+    stopCamera();
+    if (!r.ok && note) toast.error(note);
+  }
+
+  function skipFace() {
+    camResolver.current?.({ ok: true, faceOk: false, note: "Checked in without camera verification" });
+    camResolver.current = null;
+    stopCamera();
+  }
+
   async function punch(kind: "in" | "out") {
     setBusy(kind);
+    let faceOk: boolean | undefined;
+    if (kind === "in" && faceVerify) {
+      const cam = await openCamera();
+      if (!cam.ok) {
+        setBusy(null);
+        return; // camera denied or no face — toast already shown / dialog cancelled
+      }
+      faceOk = cam.faceOk;
+      if (cam.note) toast.info(cam.note);
+    }
     const geo = await getPosition();
     const result = kind === "in"
-      ? await checkInFn({ data: { lat: geo.lat, lng: geo.lng, accuracyM: geo.accuracyM } })
+      ? await checkInFn({ data: { lat: geo.lat, lng: geo.lng, accuracyM: geo.accuracyM, faceOk } })
       : await checkOutFn({ data: { lat: geo.lat, lng: geo.lng, accuracyM: geo.accuracyM } });
     setBusy(null);
     if (!result.ok) {
