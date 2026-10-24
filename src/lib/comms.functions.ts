@@ -48,16 +48,18 @@ export const listAnnouncements = createServerFn({ method: "GET" })
 export const createAnnouncement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { title: string; body: string }) => input)
-  .handler(async ({ context, data }): Promise<{ ok: true } | { ok: false; error: string }> => {
-    const { supabase, userId } = context;
-    await requireAnyRole(context, "hr", "admin");
-    const title = data.title.trim();
-    const body = data.body.trim();
-    if (title.length < 3) return { ok: false, error: "Title is too short" };
-    if (body.length < 5) return { ok: false, error: "Body is too short" };
+    .handler(async ({ context, data }): Promise<{ ok: true } | { ok: false; error: string }> => {
+      const { userId } = context;
+      await requireAnyRole(context, "hr", "admin");
+      const title = data.title.trim();
+      const body = data.body.trim();
+      if (title.length < 3) return { ok: false, error: "Title is too short" };
+      if (body.length < 5) return { ok: false, error: "Body is too short" };
 
-    const { error } = await supabase.from("announcements").insert({ title, body, posted_by: userId });
-    if (error) return { ok: false, error: "Could not post the announcement" };
+      // Privileged write: role verified above; announcements has no user INSERT policy.
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { error } = await supabaseAdmin.from("announcements").insert({ title, body, posted_by: userId });
+      if (error) return { ok: false, error: "Could not post the announcement" };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await writeAudit(supabaseAdmin, {
