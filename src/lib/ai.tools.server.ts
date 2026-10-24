@@ -65,10 +65,10 @@ export const AI_TOOLS: AiToolDef[] = [
       required: [],
     },
     run: async (args, context) => {
-      const to = typeof args.to === "string" && /^\d{4}-\d{2}-\d{2}$/.test(args.to) ? args.to : new Date().toISOString().slice(0, 10);
+      const to = typeof args["to"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(args["to"]) ? args["to"] : new Date().toISOString().slice(0, 10);
       const from =
-        typeof args.from === "string" && /^\d{4}-\d{2}-\d{2}$/.test(args.from)
-          ? args.from
+        typeof args["from"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(args["from"])
+          ? args["from"]
           : new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10);
       const { data } = await context.supabase
         .from("attendance")
@@ -78,8 +78,10 @@ export const AI_TOOLS: AiToolDef[] = [
       const rows = (data ?? []) as { status: string }[];
       const counts = { present: 0, late: 0, half_day: 0, missing_checkout: 0, other: 0 };
       for (const r of rows) {
-        if (r.status in counts) (counts as Record<string, number>)[r.status] += 1;
-        else counts.other += 1;
+        if (r.status in counts) {
+          const bucket = counts as Record<string, number>;
+          bucket[r.status] = (bucket[r.status] ?? 0) + 1;
+        } else counts.other += 1;
       }
       const checkins = counts.present + counts.late + counts.half_day + counts.missing_checkout;
       return { from, to, totalRecords: rows.length, ...counts, lateRatePct: checkins ? Math.round((counts.late / checkins) * 1000) / 10 : 0 };
@@ -97,8 +99,8 @@ export const AI_TOOLS: AiToolDef[] = [
       if (!roles.includes("hr") && !roles.includes("admin")) {
         return { error: "Only HR and Admin can view the whole team's late comers. Ask me about your own attendance instead." };
       }
-      const date = typeof args.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(args.date)
-        ? args.date
+      const date = typeof args["date"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(args["date"])
+        ? args["date"]
         : new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10);
       const { data } = await context.supabase
         .from("attendance")
@@ -224,7 +226,7 @@ export const AI_TOOLS: AiToolDef[] = [
         .from("employees")
         .select("id, full_name, employee_code, status, departments(name), designations(name)" + (isPrivileged ? ", basic_salary" : ""))
         .limit(10);
-      const query = typeof args.query === "string" ? args.query.trim() : "";
+      const query = typeof args["query"] === "string" ? args["query"].trim() : "";
       if (query) q = q.or(`full_name.ilike.%${query}%,employee_code.ilike.%${query}%`);
       const { data } = await q;
       return {
