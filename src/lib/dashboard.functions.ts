@@ -86,13 +86,13 @@ async function loadOrgContext(supabase: AuthedContext["supabase"]) {
 
 export const getOrgDashboard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { from: string; to: string; departmentId?: string | null }) => input)
+  .inputValidator((input: { from?: string | null; to?: string | null; departmentId?: string | null }) => input)
   .handler(async ({ context, data }): Promise<DashboardData> => {
     const held = await requireAnyRole(context, "hr", "admin");
     const role = held.includes("admin") ? "admin" : "hr";
     const { supabase } = context;
-    const from = ISO.test(data.from) ? data.from : new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10);
-    const to = ISO.test(data.to) ? data.to : new Date().toISOString().slice(0, 10);
+    const from = data.from && ISO.test(data.from) ? data.from : new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10);
+    const to = data.to && ISO.test(data.to) ? data.to : new Date().toISOString().slice(0, 10);
 
     const org = await loadOrgContext(supabase);
 
@@ -345,13 +345,13 @@ function buildTrend(
     const i = idxOf(a.work_date);
     if (a.status === "present" || a.status === "missing_checkout") presentByBucket[i] += 1;
     if (a.status === "late") presentByBucket[i] += 1;
-    if (a.status === "late") buckets[i].late += 1;
+    if (a.status === "late") buckets[i]!.late += 1;
     if (a.status === "half_day") presentByBucket[i] += 0.5;
   }
   for (const [empId, days] of paidLeaveByEmp) {
     void empId;
     // spread paid leave across the range evenly (approximation for the chart)
-    for (let i = 0; i < bucketCount; i += 1) buckets[i].onLeave += Math.round(((days / spanDays) * bucketSize) * 10) / 10;
+    for (let i = 0; i < bucketCount; i += 1) buckets[i]!.onLeave += Math.round(((days / spanDays) * bucketSize) * 10) / 10;
   }
   for (const d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
     const iso = d.toISOString().slice(0, 10);
@@ -360,8 +360,8 @@ function buildTrend(
     expectedByBucket[idxOf(iso)] += employees.length;
   }
   buckets.forEach((b, i) => {
-    b.present = Math.round(presentByBucket[i] * 10) / 10;
-    b.absent = Math.max(0, Math.round((expectedByBucket[i] - presentByBucket[i]) * 10) / 10);
+    b.present = Math.round(presentByBucket[i]! * 10) / 10;
+    b.absent = Math.max(0, Math.round((expectedByBucket[i]! - presentByBucket[i]!) * 10) / 10);
   });
   return buckets;
 }
