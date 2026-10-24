@@ -137,7 +137,7 @@ function AttendancePage() {
   }
 
   async function verifyFaceNow() {
-    const faceOk = true;
+    let faceOk = true;
     let note: string | undefined;
     const video = videoRef.current;
     const detector = (window as unknown as { FaceDetector?: new (o?: object) => { detect: (s: unknown) => Promise<{ length: number }> } }).FaceDetector;

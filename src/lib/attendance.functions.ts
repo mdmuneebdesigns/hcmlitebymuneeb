@@ -100,8 +100,8 @@ export const checkIn = createServerFn({ method: "POST" })
       lat?: number | null;
       lng?: number | null;
       accuracyM?: number | null;
-      faceOk?: boolean;
-      checkMethod?: string;
+      faceOk?: boolean | undefined;
+      checkMethod?: string | undefined;
     }) => input,
   )
   .handler(async ({ context, data }): Promise<CheckResult> => {
