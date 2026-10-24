@@ -19,18 +19,20 @@ export const listAnnouncements = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<AnnouncementDto[]> => {
     const { data, error } = await context.supabase
       .from("announcements")
-      .select("id, title, body, created_at, posted_by, profiles_hint:posted_by")
+      .select("id, title, body, created_at, posted_by")
       .order("created_at", { ascending: false })
       .limit(50);
-    void data;
     if (error) throw new Error("Could not load announcements");
-    // posted_by is an auth user id; resolve names from employees/user_metadata via a second query
     const rows = (data as unknown as { id: string; title: string; body: string; created_at: string; posted_by: string | null }[]) ?? [];
     const authorIds = [...new Set(rows.map((r) => r.posted_by).filter(Boolean))] as string[];
     const nameMap = new Map<string, string>();
     if (authorIds.length > 0) {
-      const { data: authAdmin } = await import("@/integrations/supabase/client.server").then((m) => m);
-      void authAdmin;
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: emps } = await supabaseAdmin
+        .from("employees")
+        .select("user_id, full_name")
+        .in("user_id", authorIds);
+      for (const e of emps ?? []) nameMap.set(e.user_id, e.full_name);
     }
     return rows.map((r) => ({
       id: r.id,
