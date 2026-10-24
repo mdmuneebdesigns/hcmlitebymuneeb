@@ -61,7 +61,6 @@ export const createAnnouncement = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin.from("announcements").insert({ title, body, posted_by: userId });
       if (error) return { ok: false, error: "Could not post the announcement" };
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await writeAudit(supabaseAdmin, {
       actorId: userId,
       actorEmail: await actorEmail(context),
