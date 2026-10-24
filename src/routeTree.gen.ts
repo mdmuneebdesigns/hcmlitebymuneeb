@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedOrgRouteImport } from './routes/_authenticated/org'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOrgRoute = AuthenticatedOrgRouteImport.update({
+  id: '/org',
+  path: '/org',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/org': typeof AuthenticatedOrgRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/org': typeof AuthenticatedOrgRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,12 +77,14 @@ export interface FileRoutesById {
   '/setup': typeof SetupRoute
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/org': typeof AuthenticatedOrgRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/setup' | '/change-password' | '/dashboard'
+  fullPaths:
+    '/' | '/auth' | '/setup' | '/change-password' | '/dashboard' | '/org'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/setup' | '/change-password' | '/dashboard'
+  to: '/' | '/auth' | '/setup' | '/change-password' | '/dashboard' | '/org'
   id:
     | '__root__'
     | '/'
@@ -83,6 +93,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/_authenticated/change-password'
     | '/_authenticated/dashboard'
+    | '/_authenticated/org'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -136,17 +147,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/org': {
+      id: '/_authenticated/org'
+      path: '/org'
+      fullPath: '/org'
+      preLoaderRoute: typeof AuthenticatedOrgRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedOrgRoute: typeof AuthenticatedOrgRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChangePasswordRoute: AuthenticatedChangePasswordRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedOrgRoute: AuthenticatedOrgRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
