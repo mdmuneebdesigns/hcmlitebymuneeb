@@ -114,12 +114,12 @@ function DashboardsPage() {
 
   const kpiCards = data
     ? [
-        { label: "Headcount", value: data.kpis.headcount, icon: Users, hint: `${data.kpis.joiners} joined · ${data.kpis.exits} exited` },
-        { label: "Attendance", value: `${data.kpis.attendanceRate}%`, icon: CalendarCheck, hint: `${data.kpis.presentDays} present of ${data.kpis.expectedDays} expected days` },
-        { label: "Late rate", value: `${data.kpis.lateRate}%`, icon: Clock, hint: "Arrivals after start + grace" },
-        { label: "Absenteeism", value: `${data.kpis.absenteeismRate}%`, icon: TrendingDown, hint: "Days missed vs expected" },
-        { label: "Leave utilization", value: `${data.kpis.leaveUtilization}%`, icon: BarChart3, hint: `${data.kpis.pendingLeaves} pending leave requests` },
-        { label: "Payroll cost", value: data.kpis.payrollCostNet > 0 ? `PKR ${data.kpis.payrollCostNet.toLocaleString()}` : "—", icon: Building2, hint: "Latest payroll run (net)" },
+        { label: "Headcount", value: data.kpis?.headcount ?? 0, icon: Users, hint: `${data.kpis?.newJoiners ?? 0} joined · ${data.kpis?.exits ?? 0} exited` },
+        { label: "Attendance", value: `${data.kpis?.attendanceRate ?? 0}%`, icon: CalendarCheck, hint: `${data.kpis?.presentDays ?? 0} present of ${data.kpis?.expectedDays ?? 0} expected days` },
+        { label: "Late rate", value: `${data.kpis?.lateRate ?? 0}%`, icon: Clock, hint: "Arrivals after start + grace" },
+        { label: "Absenteeism", value: `${data.kpis?.absenteeismRate ?? 0}%`, icon: TrendingDown, hint: "Days missed vs expected" },
+        { label: "Leave utilization", value: `${data.kpis?.leaveUtilization ?? 0}%`, icon: BarChart3, hint: "Approved leave vs total quota" },
+        { label: "Payroll cost", value: data.kpis?.payrollCostNet ? `PKR ${data.kpis.payrollCostNet.toLocaleString()}` : "—", icon: Building2, hint: data.kpis?.payrollPeriod ? `Latest run: ${data.kpis.payrollPeriod} (net)` : "No payroll run yet" },
       ]
     : [];
 
@@ -221,14 +221,16 @@ function DashboardsPage() {
                     </CardHeader>
                     <CardContent className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data.trend}>
+                        <BarChart data={data.trend}>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                           <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                          <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} />
+                          <YAxis tick={{ fontSize: 11 }} />
                           <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
-                          <Line type="monotone" dataKey="attendanceRate" stroke="#0ea5e9" strokeWidth={2} dot={false} name="Attendance %" />
-                          <Line type="monotone" dataKey="lateRate" stroke="#f59e0b" strokeWidth={2} dot={false} name="Late %" />
-                        </LineChart>
+                          <Legend iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                          <Bar dataKey="present" stackId="a" fill="#22c55e" name="Present" radius={[0, 0, 0, 0]} />
+                          <Bar dataKey="late" stackId="a" fill="#f59e0b" name="Late" />
+                          <Bar dataKey="onLeave" stackId="a" fill="#0ea5e9" name="On leave" radius={[4, 4, 0, 0]} />
+                        </BarChart>
                       </ResponsiveContainer>
                     </CardContent>
                   </Card>
@@ -317,12 +319,10 @@ function DashboardsPage() {
                 <>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {[
-                      { label: "Present days", value: myData.kpis.presentDays, hint: `of ${myData.kpis.expectedDays} working days` },
-                      { label: "Late arrivals", value: myData.kpis.lateCount, hint: "after start + grace" },
-                      { label: "Half days", value: myData.kpis.halfDays, hint: "below the half-day threshold" },
-                      { label: "Leave days taken", value: myData.kpis.leaveDaysTaken, hint: "approved leave in the period" },
-                      { label: "Pending leave requests", value: myData.kpis.pendingLeaves, hint: "awaiting HR decision" },
-                      { label: "Attendance", value: `${myData.kpis.attendanceRate}%`, hint: "present vs expected" },
+                      { label: "Present days", value: myData.my?.presentDays ?? 0, hint: `last 30 days (half days count 0.5)` },
+                      { label: "Late arrivals", value: myData.my?.lateDays ?? 0, hint: "after start + grace" },
+                      { label: "Missed days", value: myData.my?.absentDays ?? 0, hint: "expected minus present" },
+                      { label: "Leave utilization", value: myData.my?.leaveBalanceSummary ?? "—", hint: "this calendar year" },
                     ].map((c) => (
                       <Card key={c.label}>
                         <CardHeader className="pb-2">
