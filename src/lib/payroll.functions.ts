@@ -135,8 +135,7 @@ export const runPayrollDraft = createServerFn({ method: "POST" })
       const monthEnd = `${year}-${String(month).padStart(2, "0")}-${String(new Date(Date.UTC(year, month, 0)).getUTCDate()).padStart(2, "0")}`;
       // Reject only months that have not started yet (allow the current month
       // mid-month — attendance and leave data up to today is what gets paid).
-      const startMs = new Date(`${monthStart}T00:00:00Z`).getTime();
-      if (startMs > Date.now() + 26 * 3600 * 1000) {
+      if (isFutureMonth(year, month, Date.now())) {
         return { ok: false, error: "Cannot run payroll for a future month" };
       }
 

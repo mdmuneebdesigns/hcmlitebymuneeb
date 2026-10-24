@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { annualTax, isFutureMonth, monthlyTax, salaryBreakdown, computePayslip, eligibleWorkingDays, workingDaysInMonth, attritionRisk } from "../../lib/rules/payroll-rules";
 import {
   annualTax,
   computePayslip,
