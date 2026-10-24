@@ -296,7 +296,7 @@ export const getOrgDashboard = createServerFn({ method: "POST" })
     }
     const pendingLeaves = leaves.filter((l) => l.status === "pending").length;
     if (pendingLeaves > 0)
-      anomalies.push({ kind: "pending", severity: "low", message: `${pendingLeaves} leave request(s) awaiting decision` } as AnomalyFlag & { severity: "low" });
+      anomalies.push({ kind: "pending", severity: "medium", message: `${pendingLeaves} leave request(s) awaiting decision` });
 
     return { role, kpis, trend, departments, attrition, anomalies, my: null, range: { from, to } };
   });
