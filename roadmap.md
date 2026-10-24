@@ -23,17 +23,21 @@ Plan approved: `.lovable/plan/hcm-lite-master-architectural-implementation-plan-
 - [x] Audit logging on every create/update/approve (before/after JSON) — verified rows in `audit_logs`
 - [x] Tests: 27 unit tests (attendance rules: PKT stamping, late/half-day/weekend, Haversine, day-board status; CSV rules: full dry-run matrix, parse/export) — all passing
 
-## Phase 3 — Leave, Payroll, Dashboards, Audit (code complete; E2E verification pending)
-- [x] Leave apply/balance/overlap 422 + HR approval inbox (`/leaves`, leave-rules tests)
-- [x] Payroll draft run (Gross=1.5×basic, deductions, late penalty, tax slabs, proration) (`/payroll`, payroll-rules tests)
-- [x] Admin finalize/lock; payslip PDF download (pdf-lib, per-employee or per-run)
-- [x] Role dashboards (Recharts) + date/dept filters; attrition + anomaly flags (`/dashboards`)
-- [x] Announcements, notification bell, audit log viewer (`/announcements`, `/audit-logs`)
+## Phase 3 — Leave, Payroll, Dashboards, Audit (complete; verified E2E in preview)
+- [x] Leave apply/balance/overlap 422 + HR approval inbox (`/leaves`, leave-rules tests) — verified: employee applied Annual 26–27 Oct (Roman-Urdu AI pre-fill), balances 2 pending / 12 remaining, Admin approved, employee notification received
+- [x] Payroll draft run (Gross=1.5×basic, deductions, late penalty, tax slabs, proration) (`/payroll`, payroll-rules tests) — verified: Oct 2026 draft = 3 payslips, gross PKR 330,000, net PKR 70,181.82; current-month rule fixed (`isFutureMonth`)
+- [x] Admin finalize/lock; payslip PDF download (pdf-lib, per-employee or per-run) — verified: run locked "finalized", employee downloaded `October_2026_payslip.pdf`; `payslip.download` audited
+- [x] Role dashboards (Recharts) + date/dept filters; attrition + anomaly flags (`/dashboards`) — verified: KPIs, dept donut/bar, attrition scores, absenteeism anomaly
+- [x] Announcements, notification bell, audit log viewer (`/announcements`, `/audit-logs`) — verified: posting writes through admin client (tables intentionally have no user INSERT policies)
 
-## Phase 4 — AI + Camera (code complete; E2E verification pending)
-- [x] AI Gateway integration + scoped tool-calling chat (`src/lib/ai.functions.ts`, `ai.tools.server.ts`)
-- [x] KPI summarizer, smart leave parser (EN + Roman Urdu), policy Q&A
+## Phase 4 — AI + Camera (complete; verified E2E in preview)
+- [x] AI Gateway integration + scoped tool-calling chat (`src/lib/ai.functions.ts`, `ai.tools.server.ts`) — verified: "What is my leave balance?" returned role-scoped table with AI badge
+- [x] KPI summarizer — verified: "Summarize with AI" produced 4 bullet insights from live KPIs with AI-generated badge
+- [x] Smart leave parser (EN + Roman Urdu) — verified: "Mujhe agle Monday aur Tuesday chutti chahiye" pre-filled Annual + correct next Mon/Tue dates
 - [x] Guardrails: 15s timeout, friendly fallbacks, per-user rate limit, `ai_logs`, AI badge
 - [x] Camera + GPS geofence check-in (FaceDetector, skip option; server-side Haversine; `webcam`/`webcam+gps` check_method)
-- [ ] Dark mode + PWA polish; E2E judge demo script verification
-- [ ] README + .env.example (done) — final credential handoff for judging
+- [x] README + .env.example — done; test credentials handed off in chat (Admin / HR / Employee)
+- [ ] Dark mode + PWA polish (optional bonus, not started)
+
+## Demo state (as of 2026-10-25)
+Test logins: admin@saylani.test / hr@saylani.test / bilal@saylani.test — passwords in the chat handoff. Seeded during testing: company Saylani Test Corp, 3 employees, 1 attendance day, 1 approved leave, finalized Oct-2026 payroll run, 1 announcement. Judge Reset (Admin dashboard) wipes everything back to /setup.
