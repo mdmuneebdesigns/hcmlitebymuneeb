@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/table";
 import { getEmployee360, updateEmployee, updateMyContact, type Employee360 } from "@/lib/employees.functions";
 import { getOrgData } from "@/lib/org.functions";
-import { StatusBadge } from "@/routes/_authenticated/employees";
+import { StatusBadge } from "@/components/status-badge";
 
 export const Route = createFileRoute("/_authenticated/employees/$id")({
   component: Employee360Page,

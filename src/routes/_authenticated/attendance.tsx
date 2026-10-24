@@ -41,7 +41,7 @@ import {
   type DayBoardRow,
 } from "@/lib/attendance.functions";
 import { pktStamp } from "@/lib/rules/attendance-rules";
-import { StatusBadge } from "@/routes/_authenticated/employees";
+import { StatusBadge } from "@/components/status-badge";
 
 export const Route = createFileRoute("/_authenticated/attendance")({
   loader: () => getMe(),
