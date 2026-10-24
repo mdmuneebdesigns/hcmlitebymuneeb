@@ -96,7 +96,13 @@ async function actorEmail(context: AuthedContext): Promise<string | null> {
 export const checkIn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { lat?: number | null; lng?: number | null; accuracyM?: number | null }) => input,
+    (input: {
+      lat?: number | null;
+      lng?: number | null;
+      accuracyM?: number | null;
+      faceOk?: boolean | undefined;
+      checkMethod?: string | undefined;
+    }) => input,
   )
   .handler(async ({ context, data }): Promise<CheckResult> => {
     const { supabase, userId } = context;
@@ -130,6 +136,20 @@ export const checkIn = createServerFn({ method: "POST" })
     const distanceM =
       lat !== null && lng !== null ? haversineMeters(lat, lng, rules.office_lat, rules.office_lng) : null;
 
+    // Camera verification: if the widget was used and no face was seen, refuse.
+    if (data.faceOk === false) {
+      return { ok: false, code: 422, error: "No face detected in front of the camera — sit in frame and try again" };
+    }
+
+    const checkMethod =
+      data.faceOk === true && lat !== null
+        ? "webcam+gps"
+        : data.faceOk === true
+          ? "webcam"
+          : lat !== null
+            ? "gps"
+            : "web";
+
     const { data: record, error } = await supabaseAdmin
       .from("attendance")
       .insert({
@@ -141,7 +161,7 @@ export const checkIn = createServerFn({ method: "POST" })
         check_in_lng: lng,
         check_in_accuracy_m: typeof data.accuracyM === "number" ? data.accuracyM : null,
         distance_m: distanceM,
-        check_method: "web",
+        check_method: checkMethod,
       })
       .select("id")
       .single();

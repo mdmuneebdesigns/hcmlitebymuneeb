@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { FloatingWidgets } from "@/components/floating-widgets";
 import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
@@ -142,6 +143,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <FloatingWidgets />
       <Toaster />
     </QueryClientProvider>
   );
