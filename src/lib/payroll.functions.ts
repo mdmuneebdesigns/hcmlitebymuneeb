@@ -545,7 +545,7 @@ function toBase64(bytes: Uint8Array): string {
 
 export const getPayslipPdf = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { runId: string; employeeId?: string }) => input)
+  .inputValidator((input: { runId: string; employeeId?: string | undefined }) => input)
   .handler(async ({ context, data }): Promise<{ ok: true; filename: string; base64: string } | { ok: false; error: string }> => {
     const held = await requireAnyRole(context, "employee", "hr", "admin");
     const isPrivileged = held.includes("hr") || held.includes("admin");

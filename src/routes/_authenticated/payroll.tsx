@@ -60,7 +60,7 @@ function PayrollPage() {
 
   const [mySlips, setMySlips] = useState<(PayslipDto & { period_year: number; period_month: number; run_status: string })[]>([]);
   const [runs, setRuns] = useState<PayrollRunDto[]>([]);
-  const [selectedRun, setSelectedRun] = useState<{ run: PayrollRunDto; payslips: PayslipDto[] } | null>(null);
+  const [selectedRun, setSelectedRun] = useState<{ run: PayrollRunDto | null; payslips: PayslipDto[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
