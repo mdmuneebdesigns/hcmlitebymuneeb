@@ -48,7 +48,7 @@ import {
 import { parseCsv, toCsv, type CsvEmployeeRow } from "@/lib/rules/csv-rules";
 import { getOrgData } from "@/lib/org.functions";
 
-export const Route = createFileRoute("/_authenticated/employees")({
+export const Route = createFileRoute("/_authenticated/employees/")({
   loader: async () => {
     const me = await getMe();
     if (!me.roles.includes("hr") && !me.roles.includes("admin")) {
