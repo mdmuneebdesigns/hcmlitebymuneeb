@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { annualTax, isFutureMonth, monthlyTax, salaryBreakdown, computePayslip, eligibleWorkingDays, workingDaysInMonth, attritionRisk } from "../../lib/rules/payroll-rules";
 import {
   annualTax,
   computePayslip,
   eligibleWorkingDays,
+  isFutureMonth,
   monthlyTax,
   salaryBreakdown,
   workingDaysInMonth,
@@ -121,5 +121,15 @@ describe("payslip math", () => {
       latePenaltyDays: 0.5,
     });
     expect(p.gross).toBeCloseTo(75_000, 2);
+  });
+});
+
+describe("future-month payroll rule", () => {
+  it("allows the current month mid-month and rejects months that have not started", () => {
+    // 2026-10-24 23:00 UTC — October is current, November has not started
+    const now = Date.parse("2026-10-24T23:00:00Z");
+    expect(isFutureMonth(2026, 10, now)).toBe(false);
+    expect(isFutureMonth(2026, 11, now)).toBe(true);
+    expect(isFutureMonth(2027, 1, now)).toBe(true);
   });
 });
