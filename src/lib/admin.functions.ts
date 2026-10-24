@@ -40,7 +40,7 @@ export const wipeAllData = createServerFn({ method: "POST" })
       "companies",
     ];
     for (const table of tables) {
-      const { error } = await supabaseAdmin.from(table).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      const { error } = await supabaseAdmin.from(table).delete().neq("id", "00000000-0000-0000-0000-000000000000" as never);
       if (error) return { ok: false, error: `Reset failed at ${table}: ${error.message}` };
     }
 
