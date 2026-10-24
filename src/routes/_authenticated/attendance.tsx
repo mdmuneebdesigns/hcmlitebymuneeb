@@ -225,6 +225,17 @@ function AttendancePage() {
               {busy === "out" ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <LogOut className="mr-1 h-4 w-4" />}
               {checkedOut ? "Checked out" : "Check out"}
             </Button>
+            {!checkedIn && (
+              <label className="ml-2 inline-flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={faceVerify}
+                  onChange={(e) => setFaceVerify(e.target.checked)}
+                  className="h-4 w-4 accent-[hsl(var(--primary))]"
+                />
+                <Camera className="h-3.5 w-3.5" /> Verify face + location on check-in
+              </label>
+            )}
             {record && (
               <div className="ml-auto flex items-center gap-2 text-sm">
                 <StatusBadge status={record.status} />
