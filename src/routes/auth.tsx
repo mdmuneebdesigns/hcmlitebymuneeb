@@ -25,9 +25,13 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+const DEMO_ACCOUNTS = [
+  { label: "Admin", email: "admin@saylani.test", password: "Admin@HCM2026" },
+  { label: "HR", email: "hr@saylani.test", password: "Hr@HCM2026" },
+  { label: "Employee", email: "bilal@saylani.test", password: "Emp@HCM2026" },
+];
 
   // Already signed in? Go straight to the dashboard.
   useEffect(() => {
