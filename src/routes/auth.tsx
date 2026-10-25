@@ -101,6 +101,30 @@ function AuthPage() {
               Sign in
             </Button>
           </form>
+          <div className="mt-4 rounded-lg border border-dashed border-border p-3 text-xs">
+            <p className="font-medium text-foreground">Quick Demo Credentials</p>
+            <p className="mt-0.5 text-muted-foreground">
+              Click a row to fill the form (accounts must exist — recreate them after a Judge Reset).
+            </p>
+            <div className="mt-2 space-y-1">
+              {DEMO_ACCOUNTS.map((acc) => (
+                <button
+                  key={acc.email}
+                  type="button"
+                  onClick={() => {
+                    setEmail(acc.email);
+                    setPassword(acc.password);
+                  }}
+                  className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1 text-left hover:bg-accent"
+                >
+                  <span className="font-medium text-foreground">{acc.label}</span>
+                  <span className="truncate font-mono text-[11px] text-muted-foreground">
+                    {acc.email} · {acc.password}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
           <p className="mt-4 text-center text-xs text-muted-foreground">
             Accounts are created by your Admin or HR — there is no self-signup.
           </p>
