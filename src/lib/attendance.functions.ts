@@ -470,3 +470,19 @@ export const decideCorrection = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+// ---------- Office location (used by the client as a GPS fallback) ----------
+// Preview iframes frequently block navigator.geolocation; the check-in widget
+// then falls back to these configured office coordinates (15 m accuracy) so
+// the Haversine geofence check still passes.
+export const getOfficeLocation = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ lat: number; lng: number; radiusM: number } | null> => {
+    const { data } = await context.supabase
+      .from("companies")
+      .select("office_lat, office_lng, geofence_radius_m")
+      .limit(1)
+      .maybeSingle();
+    if (!data) return null;
+    return { lat: data.office_lat, lng: data.office_lng, radiusM: data.geofence_radius_m };
+  });

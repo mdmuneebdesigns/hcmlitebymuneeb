@@ -552,6 +552,9 @@ function HolidaysTab({ data }: { data: OrgData }) {
 // ---------- Office settings ----------
 
 const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+// Zaitoon Ashraf IT Park, Karachi — GPS fallback default (preview iframes block geolocation).
+const DEFAULT_LAT = "24.8607";
+const DEFAULT_LNG = "67.0011";
 
 function SettingsTab({ data }: { data: OrgData }) {
   const qc = useQueryClient();
@@ -603,9 +606,17 @@ function SettingsTab({ data }: { data: OrgData }) {
     await qc.invalidateQueries({ queryKey: ["org"] });
   }
 
+  function setKarachiDefault() {
+    setLat(DEFAULT_LAT);
+    setLng(DEFAULT_LNG);
+    toast.success("Karachi IT Park default location set (24.8607, 67.0011)");
+  }
+
   function useMyLocation() {
-    if (!navigator.geolocation) {
-      toast.error("Your browser does not support location");
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLat(DEFAULT_LAT);
+      setLng(DEFAULT_LNG);
+      toast.info("GPS not available — using Karachi IT Park default location");
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -614,8 +625,12 @@ function SettingsTab({ data }: { data: OrgData }) {
         setLng(pos.coords.longitude.toFixed(6));
         toast.success("Current location captured");
       },
-      () => toast.error("Could not get your location — enter coordinates manually"),
-      { timeout: 8000 },
+      () => {
+        setLat(DEFAULT_LAT);
+        setLng(DEFAULT_LNG);
+        toast.info("GPS blocked or timed out — using Karachi IT Park default location");
+      },
+      { timeout: 3000, maximumAge: 60000 },
     );
   }
 
@@ -678,7 +693,8 @@ function SettingsTab({ data }: { data: OrgData }) {
             <Label htmlFor="co-lng">Office longitude</Label>
             <Input id="co-lng" value={lng} onChange={(e) => setLng(e.target.value)} />
           </div>
-          <div className="flex items-end">
+          <div className="flex flex-wrap items-end gap-2">
+            <Button variant="outline" onClick={setKarachiDefault}>📍 Karachi IT Park Default (24.8607, 67.0011)</Button>
             <Button variant="outline" onClick={useMyLocation}>Use my current location</Button>
           </div>
         </div>

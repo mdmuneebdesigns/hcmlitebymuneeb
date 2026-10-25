@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { completeFirstRunSetup } from "@/lib/setup.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/setup")({
   head: () => ({
@@ -24,6 +25,10 @@ export const Route = createFileRoute("/setup")({
 });
 
 const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+// Zaitoon Ashraf IT Park, Karachi — the default office location so setup
+// never blocks on GPS (preview iframes often block geolocation).
+const DEFAULT_LAT = "24.8607";
+const DEFAULT_LNG = "67.0011";
 
 function SetupPage() {
   const navigate = useNavigate();
@@ -35,8 +40,8 @@ function SetupPage() {
   const [graceMinutes, setGraceMinutes] = useState(15);
   const [halfDayHours, setHalfDayHours] = useState(5);
   const [weekendDays, setWeekendDays] = useState<string[]>(["Saturday", "Sunday"]);
-  const [officeLat, setOfficeLat] = useState<number | null>(null);
-  const [officeLng, setOfficeLng] = useState<number | null>(null);
+  const [officeLat, setOfficeLat] = useState(DEFAULT_LAT);
+  const [officeLng, setOfficeLng] = useState(DEFAULT_LNG);
   const [radius, setRadius] = useState(150);
 
   // Admin
@@ -50,18 +55,32 @@ function SetupPage() {
     setWeekendDays((prev) => (prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]));
   }
 
+  function setKarachiDefault() {
+    setOfficeLat(DEFAULT_LAT);
+    setOfficeLng(DEFAULT_LNG);
+    toast.success("Karachi IT Park default location set (24.8607, 67.0011)");
+  }
+
   function useMyLocation() {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not available in this browser");
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setOfficeLat(DEFAULT_LAT);
+      setOfficeLng(DEFAULT_LNG);
+      toast.info("GPS not available — using Karachi IT Park default location");
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setOfficeLat(Number(pos.coords.latitude.toFixed(6)));
-        setOfficeLng(Number(pos.coords.longitude.toFixed(6)));
+        setOfficeLat(Number(pos.coords.latitude.toFixed(6)).toString());
+        setOfficeLng(Number(pos.coords.longitude.toFixed(6)).toString());
         toast.success("Office location captured");
       },
-      () => toast.error("Could not read your location — enter coordinates manually"),
+      () => {
+        // Blocked or timed out — never throw, fall back to the default.
+        setOfficeLat(DEFAULT_LAT);
+        setOfficeLng(DEFAULT_LNG);
+        toast.info("GPS blocked or timed out — using Karachi IT Park default location");
+      },
+      { timeout: 3000, maximumAge: 60000 },
     );
   }
 
@@ -74,8 +93,13 @@ function SetupPage() {
       toast.error("Select at least one weekend day");
       return false;
     }
-    if (officeLat === null || officeLng === null) {
-      toast.error("Capture the office location (GPS or manual coordinates)");
+    const latNum = Number(officeLat);
+    const lngNum = Number(officeLng);
+    if (
+      !Number.isFinite(latNum) || latNum < -90 || latNum > 90 ||
+      !Number.isFinite(lngNum) || lngNum < -180 || lngNum > 180
+    ) {
+      toast.error("Enter valid coordinates (e.g. 24.8607, 67.0011)");
       return false;
     }
     return true;
@@ -108,8 +132,8 @@ function SetupPage() {
           graceMinutes,
           halfDayHours,
           weekendDays,
-          officeLat: officeLat!,
-          officeLng: officeLng!,
+          officeLat: Number(officeLat),
+          officeLng: Number(officeLng),
           geofenceRadiusM: radius,
           adminFullName: adminFullName.trim(),
           adminEmail: adminEmail.trim(),
@@ -121,8 +145,19 @@ function SetupPage() {
         setLoading(false);
         return;
       }
-      toast.success("Company created! Please sign in with the Admin account.");
-      navigate({ to: "/auth", replace: true });
+      // Auto sign-in: the Admin account is created and email-confirmed
+      // server-side, so the credentials just typed can sign straight in.
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: adminEmail.trim(),
+        password: adminPassword,
+      });
+      if (signInError) {
+        toast.success("Company created! Please sign in with the Admin account.");
+        navigate({ to: "/auth", replace: true });
+        return;
+      }
+      toast.success("Company created — you are signed in as Admin");
+      navigate({ to: "/", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Setup failed");
       setLoading(false);
@@ -195,10 +230,27 @@ function SetupPage() {
               <div className="space-y-2">
                 <Label>Office location (for camera check-in geofence)</Label>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input readOnly value={officeLat === null ? "" : String(officeLat)} placeholder="Latitude" />
-                  <Input readOnly value={officeLng === null ? "" : String(officeLng)} placeholder="Longitude" />
+                  <Input
+                    id="officeLat"
+                    type="text"
+                    inputMode="decimal"
+                    value={officeLat}
+                    onChange={(e) => setOfficeLat(e.target.value)}
+                    placeholder="Latitude (e.g. 24.8607)"
+                  />
+                  <Input
+                    id="officeLng"
+                    type="text"
+                    inputMode="decimal"
+                    value={officeLng}
+                    onChange={(e) => setOfficeLng(e.target.value)}
+                    placeholder="Longitude (e.g. 67.0011)"
+                  />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={setKarachiDefault}>
+                    📍 Use Karachi IT Park Default (24.8607, 67.0011)
+                  </Button>
                   <Button type="button" variant="outline" size="sm" onClick={useMyLocation}>
                     <MapPin className="h-4 w-4" /> Use my current location
                   </Button>
