@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAnyRole } from "@/lib/rbac.server";
 import { writeAudit } from "@/lib/audit.server";
-import { actorEmail, getOwnEmployeeId, notify, userIdsWithRole } from "@/lib/helpers.server";
+import { actorEmail, ensureOwnEmployeeProfile, getOwnEmployeeId, notify, userIdsWithRole } from "@/lib/helpers.server";
 import { usedDaysInYear, validateLeaveRequest } from "@/lib/rules/leave-rules";
 
 // ---------- Types (client-safe) ----------
@@ -129,8 +129,9 @@ export const applyLeave = createServerFn({ method: "POST" })
   .handler(async ({ context, data }): Promise<LeaveResult> => {
     const { supabase, userId } = context;
     await requireAnyRole(context, "employee", "hr", "admin");
-    const employeeId = await getOwnEmployeeId(context);
-    if (!employeeId) return { ok: false, code: 400, error: "No employee profile is linked to your account" };
+    // Never block leave requests on a missing profile: auto-create + link one.
+    const employeeId = await ensureOwnEmployeeProfile(context);
+    if (!employeeId) return { ok: false, code: 400, error: "Could not link an employee profile to your account" };
 
     const reason = data.reason.trim();
     if (reason.length < 5) return { ok: false, code: 422, error: "Please give a short reason (at least 5 characters)" };

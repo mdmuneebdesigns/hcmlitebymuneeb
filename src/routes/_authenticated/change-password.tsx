@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { clearMustChangePassword, getMe } from "@/lib/auth.functions";
+import { PasswordStrengthChecklist, isPasswordStrong } from "@/components/password-checklist";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/change-password")({
@@ -35,8 +36,8 @@ function ChangePasswordPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (newPassword.length < 8) {
-      toast.error("Password must be at least 8 characters");
+    if (!isPasswordStrong(newPassword)) {
+      toast.error("Password must meet all 5 requirements below");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -107,6 +108,7 @@ function ChangePasswordPage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
+              <PasswordStrengthChecklist password={newPassword} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm password</Label>
@@ -119,7 +121,7 @@ function ChangePasswordPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || !isPasswordStrong(newPassword)}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
               Update password
             </Button>

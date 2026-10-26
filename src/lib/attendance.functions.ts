@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAnyRole, type AuthedContext } from "@/lib/rbac.server";
+import { ensureOwnEmployeeProfile } from "@/lib/helpers.server";
 import { writeAudit } from "@/lib/audit.server";
 import {
   checkInStatus,
@@ -108,8 +109,10 @@ export const checkIn = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await requireAnyRole(context, "employee", "hr", "admin");
 
-    const employeeId = await getOwnEmployeeId(context);
-    if (!employeeId) return { ok: false, code: 400, error: "No employee profile is linked to your account" };
+    // Never block check-in on a missing profile: auto-create + link one for
+    // Admin/HR accounts that were created during first-run setup.
+    const employeeId = await ensureOwnEmployeeProfile(context);
+    if (!employeeId) return { ok: false, code: 400, error: "Could not link an employee profile to your account" };
 
     const rules = await getCompanyRules(context);
     if (!rules) return { ok: false, code: 500, error: "Office settings are missing — finish the setup wizard" };
@@ -190,8 +193,8 @@ export const checkOut = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await requireAnyRole(context, "employee", "hr", "admin");
 
-    const employeeId = await getOwnEmployeeId(context);
-    if (!employeeId) return { ok: false, code: 400, error: "No employee profile is linked to your account" };
+    const employeeId = await ensureOwnEmployeeProfile(context);
+    if (!employeeId) return { ok: false, code: 400, error: "Could not link an employee profile to your account" };
 
     const rules = await getCompanyRules(context);
     if (!rules) return { ok: false, code: 500, error: "Office settings are missing — finish the setup wizard" };
@@ -333,8 +336,8 @@ export const requestCorrection = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await requireAnyRole(context, "employee", "hr", "admin");
 
-    const employeeId = await getOwnEmployeeId(context);
-    if (!employeeId) return { ok: false, error: "No employee profile is linked to your account" };
+    const employeeId = await ensureOwnEmployeeProfile(context);
+    if (!employeeId) return { ok: false, error: "Could not link an employee profile to your account" };
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(data.workDate)) return { ok: false, error: "Use a valid date (YYYY-MM-DD)" };
     if (!["check_in", "check_out"].includes(data.field)) return { ok: false, error: "Field must be check-in or check-out" };
@@ -485,4 +488,38 @@ export const getOfficeLocation = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!data) return null;
     return { lat: data.office_lat, lng: data.office_lng, radiusM: data.geofence_radius_m };
+  });
+
+// ---------- Geofence sync (HR/Admin): point the office at the caller's live location ----------
+export const syncOfficeGeofence = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { lat: number; lng: number }) => input)
+  .handler(async ({ context, data }): Promise<SimpleResult> => {
+    await requireAnyRole(context, "hr", "admin");
+    if (
+      !Number.isFinite(data.lat) || Math.abs(data.lat) > 90 ||
+      !Number.isFinite(data.lng) || Math.abs(data.lng) > 180
+    ) {
+      return { ok: false, error: "Enter valid coordinates" };
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: company } = await supabaseAdmin.from("companies").select("id").limit(1).maybeSingle();
+    if (!company) return { ok: false, error: "No company found — finish the setup wizard" };
+
+    const { error } = await supabaseAdmin
+      .from("companies")
+      .update({ office_lat: data.lat, office_lng: data.lng })
+      .eq("id", company.id as string);
+    if (error) return { ok: false, error: "Could not sync the office geofence" };
+
+    await writeAudit(supabaseAdmin, {
+      actorId: context.userId,
+      actorEmail: await actorEmail(context),
+      action: "company.geofence_sync",
+      entity: "companies",
+      entityId: company.id as string,
+      after: { office_lat: data.lat, office_lng: data.lng },
+    });
+    return { ok: true };
   });
