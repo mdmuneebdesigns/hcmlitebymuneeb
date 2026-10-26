@@ -419,6 +419,14 @@ export const deleteHoliday = createServerFn({ method: "POST" })
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+// Accepts "9:5"? no — accepts "HH:MM", "H:MM" and "HH:MM:SS" (Postgres time text)
+// and always returns "HH:MM"; anything else comes back unchanged (invalid).
+export function normalizeOfficeStart(raw: unknown): string {
+  const s = typeof raw === "string" ? raw.trim() : "";
+  const m = /^([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/.exec(s);
+  return m ? `${m[1].padStart(2, "0")}:${m[2]}` : s;
+}
+
 export interface CompanySettingsInput {
   name: string;
   officeStart: string;
