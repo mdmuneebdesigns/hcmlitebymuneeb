@@ -156,6 +156,24 @@ function AttendancePage() {
     };
   }, []);
 
+  // Probe GPS once on page load so the employee sees up-front whether the live
+  // location will be used or the office fallback (blocked preview iframes).
+  useEffect(() => {
+    let alive = true;
+    getPosition().then(async (g) => {
+      if (!alive) return;
+      if (g.lat != null && g.lng != null) {
+        setGpsStatus("ready");
+        return;
+      }
+      const office = await getOfficeLocation();
+      if (alive) setGpsStatus(office ? "fallback" : "none");
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   async function openCamera(): Promise<FaceCheckResult> {
     setCamOpen(true);
     return new Promise<FaceCheckResult>((resolve) => {
