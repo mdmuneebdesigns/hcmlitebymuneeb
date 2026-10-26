@@ -143,6 +143,9 @@ function AttendancePage() {
   // Camera (face) verification for check-in
   const [faceVerify, setFaceVerify] = useState(true);
   const [camOpen, setCamOpen] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  // GPS status for this device/preview: blocked iframes fall back to the office location.
+  const [gpsStatus, setGpsStatus] = useState<"checking" | "ready" | "fallback" | "none">("checking");
   const camResolver = useRef<((r: FaceCheckResult) => void) | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
