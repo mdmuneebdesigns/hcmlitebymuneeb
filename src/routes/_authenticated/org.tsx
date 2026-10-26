@@ -612,26 +612,16 @@ function SettingsTab({ data }: { data: OrgData }) {
     toast.success("Karachi IT Park default location set (24.8607, 67.0011)");
   }
 
-  function useMyLocation() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setLat(DEFAULT_LAT);
-      setLng(DEFAULT_LNG);
-      toast.info("GPS not available — using Karachi IT Park default location");
-      return;
+  /** Multi-stage resolver: GPS → Wi-Fi GPS → IP geolocation → silent default. */
+  async function detectMyLocation() {
+    const loc = await getRealUserLocation(true);
+    setLat(loc.lat.toFixed(6));
+    setLng(loc.lng.toFixed(6));
+    if (loc.source === "default") {
+      toast.info("Offline — using Karachi IT Park default location");
+    } else {
+      toast.success(`Live location detected (${loc.source === "ip" ? "IP trace" : "GPS"})`);
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLat(pos.coords.latitude.toFixed(6));
-        setLng(pos.coords.longitude.toFixed(6));
-        toast.success("Current location captured");
-      },
-      () => {
-        setLat(DEFAULT_LAT);
-        setLng(DEFAULT_LNG);
-        toast.info("GPS blocked or timed out — using Karachi IT Park default location");
-      },
-      { timeout: 3000, maximumAge: 60000 },
-    );
   }
 
   function toggleWeekend(day: string) {
@@ -694,8 +684,8 @@ function SettingsTab({ data }: { data: OrgData }) {
             <Input id="co-lng" value={lng} onChange={(e) => setLng(e.target.value)} />
           </div>
           <div className="flex flex-wrap items-end gap-2">
-            <Button variant="outline" onClick={setKarachiDefault}>📍 Karachi IT Park Default (24.8607, 67.0011)</Button>
-            <Button variant="outline" onClick={useMyLocation}>Use my current location</Button>
+            <Button variant="outline" onClick={detectMyLocation}>📍 Detect My Live Location</Button>
+            <Button variant="outline" onClick={detectMyLocation}>🏢 Sync Office Geofence to My Current Location</Button>
           </div>
         </div>
         <Button onClick={save} disabled={saving}>
