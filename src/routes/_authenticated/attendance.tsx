@@ -194,7 +194,10 @@ function AttendancePage() {
     };
   }, []);
 
-  async function openCamera(): Promise<FaceCheckResult> {
+  async function openCamera(kind: "in" | "out"): Promise<FaceCheckResult> {
+    setCamMode(kind);
+    setFaceState({ found: false, ratio: 0, bbox: null });
+    setCamGeo(null);
     setCamOpen(true);
     return new Promise<FaceCheckResult>((resolve) => {
       camResolver.current = resolve;
@@ -210,6 +213,8 @@ function AttendancePage() {
             videoRef.current.srcObject = stream;
             await videoRef.current.play().catch(() => undefined);
           }
+          // Trace the live location in parallel with the face-detection loop.
+          getRealUserLocation().then((loc) => setCamGeo(loc));
         } catch {
           camResolver.current?.({ ok: false, faceOk: false });
           camResolver.current = null;
@@ -225,52 +230,113 @@ function AttendancePage() {
     setCamOpen(false);
   }
 
-  async function verifyFaceNow() {
-    const video = videoRef.current;
-    if (!video) return;
-    setAnalyzing(true);
-    let faceOk = false;
-    let note: string | undefined;
-    // Prefer the native Shape-Detection API when the browser has it; otherwise
-    // analyze frames with the built-in canvas skin-tone detector above.
-    const detector = (window as unknown as { FaceDetector?: new (o?: object) => { detect: (s: unknown) => Promise<{ length: number }> } }).FaceDetector;
-    if (detector) {
-      try {
-        const faces = await new detector({ fastMode: true, maxDetectedFaces: 1 }).detect(video);
-        faceOk = faces.length >= 1;
-        note = faceOk ? "Face detected in camera frame" : "No face detected — sit centered in frame and try again";
-      } catch {
-        note = "Face detector could not run — analyzing frames directly";
-      }
-    }
-    if (!detector) {
-      let best = 0;
+  // Live detection loop: while the dialog is open, analyze frames every 350ms
+  // (native FaceDetector when available, canvas skin-tone detector otherwise)
+  // and draw an animated green target frame around the detected face.
+  useEffect(() => {
+    if (!camOpen) return;
+    let alive = true;
+    const detector = (window as unknown as {
+      FaceDetector?: new (o?: object) => { detect: (s: unknown) => Promise<{ length: number }> };
+    }).FaceDetector;
+    const native = detector ? new detector({ fastMode: true, maxDetectedFaces: 1 }) : null;
+
+    const tick = async () => {
+      const video = videoRef.current;
+      if (!video || !alive || video.readyState < 2) return;
       let found = false;
-      for (let i = 0; i < 3 && !found; i++) {
-        const a = await analyzeVideoFrame(video);
-        best = Math.max(best, a.ratio);
-        if (a.found) found = true;
-        else await new Promise((r) => setTimeout(r, 150));
+      let ratio = 0;
+      let bbox: FrameAnalysis["bbox"] = null;
+      if (native) {
+        try {
+          const faces = await native.detect(video);
+          if (faces.length >= 1) {
+            found = true;
+            bbox = { x: 0.2, y: 0.1, w: 0.6, h: 0.8 };
+          }
+        } catch {
+          // fall through to the canvas detector below
+        }
       }
-      faceOk = found;
-      note = found
-        ? `Face detected in camera frame (${Math.round(best * 100)}% frame confidence)`
-        : "No face detected — sit centered in frame with good lighting and try again";
-    }
-    setAnalyzing(false);
-    const r: FaceCheckResult = { ok: faceOk, faceOk, note };
-    camResolver.current?.(r);
+      if (!found) {
+        const a = await analyzeVideoFrame(video);
+        found = a.found;
+        ratio = a.ratio;
+        bbox = a.bbox;
+      }
+      if (!alive) return;
+      setFaceState({ found, ratio, bbox });
+      drawOverlay(video, bbox);
+    };
+
+    const t = window.setInterval(() => void tick(), 350);
+    return () => {
+      alive = false;
+      window.clearInterval(t);
+    };
+  }, [camOpen]);
+
+  function drawOverlay(video: HTMLVideoElement, bbox: FrameAnalysis["bbox"]) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const w = video.videoWidth || 480;
+    const h = video.videoHeight || 360;
+    if (canvas.width !== w) canvas.width = w;
+    if (canvas.height !== h) canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, w, h);
+    if (!bbox) return;
+    const padX = w * 0.04;
+    const padY = h * 0.06;
+    const x = Math.max(0, bbox.x * w - padX);
+    const y = Math.max(0, bbox.y * h - padY);
+    const bw = Math.min(w - x, bbox.w * w + padX * 2);
+    const bh = Math.min(h - y, bbox.h * h + padY * 2);
+    ctx.strokeStyle = "#22c55e";
+    ctx.lineWidth = 4;
+    ctx.setLineDash([14, 10]);
+    ctx.lineDashOffset = -(Date.now() / 40) % 24;
+    ctx.strokeRect(x, y, bw, bh);
+    ctx.setLineDash([]);
+  }
+
+  function confirmCamera() {
+    if (!faceState.found || !camGeo || camGeo.source === "default") return;
+    const note = `Face detected in camera frame (${Math.round(faceState.ratio * 100)}% frame confidence)`;
+    camResolver.current?.({ ok: true, faceOk: true, note });
     camResolver.current = null;
     stopCamera();
-    if (!r.ok && note) toast.error(note);
   }
 
   function skipFace() {
     // Skipped verification means "not verified", NOT "no face seen" —
     // faceOk: false would make the server reject the punch with a 422.
-    camResolver.current?.({ ok: true, note: "Checked in without camera verification" });
+    camResolver.current?.({ ok: true, note: "Punched without camera verification" });
     camResolver.current = null;
     stopCamera();
+  }
+
+  /** Admin/HR helper: point the office geofence at the caller's live location. */
+  async function syncGeofenceToMe() {
+    setSyncingGeo(true);
+    try {
+      const loc = await getRealUserLocation(true);
+      if (loc.source === "default") {
+        toast.error("No live location available — connect to the internet and try again");
+        return;
+      }
+      const r = await syncOfficeGeofenceFn({ data: { lat: loc.lat, lng: loc.lng } });
+      if (!r.ok) {
+        toast.error(r.error);
+        return;
+      }
+      setOffice((o) => (o ? { ...o, lat: loc.lat, lng: loc.lng } : o));
+      setCamGeo(loc);
+      toast.success("Office geofence synced to your current location — check-in now passes the distance check");
+    } finally {
+      setSyncingGeo(false);
+    }
   }
 
   async function punch(kind: "in" | "out") {
