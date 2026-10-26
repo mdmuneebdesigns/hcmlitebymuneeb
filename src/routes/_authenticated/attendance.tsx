@@ -70,6 +70,53 @@ function getPosition(): Promise<Geo> {
   });
 }
 
+interface FrameAnalysis {
+  found: boolean;
+  ratio: number;
+}
+
+// Real client-side frame analysis: grabs a video frame into a canvas and runs
+// a YCbCr skin-tone detector over the central region (where a face is expected).
+// Works in every browser — no FaceDetector API or model download required.
+async function analyzeVideoFrame(video: HTMLVideoElement): Promise<FrameAnalysis> {
+  const vw = video.videoWidth || 640;
+  const vh = video.videoHeight || 480;
+  const w = 320;
+  const h = Math.max(1, Math.round((vh / vw) * w));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return { found: false, ratio: 0 };
+  ctx.drawImage(video, 0, 0, w, h);
+  const { data } = ctx.getImageData(0, 0, w, h);
+  // central region: a face should be roughly centered in the frame
+  const x0 = Math.floor(w * 0.2);
+  const x1 = Math.ceil(w * 0.8);
+  const y0 = Math.floor(h * 0.08);
+  const y1 = Math.ceil(h * 0.92);
+  let skin = 0;
+  let total = 0;
+  for (let y = y0; y < y1; y += 2) {
+    for (let x = x0; x < x1; x += 2) {
+      const i = (y * w + x) * 4;
+      const r = data[i] ?? 0;
+      const g = data[i + 1] ?? 0;
+      const b = data[i + 2] ?? 0;
+      total++;
+      const yy = 0.299 * r + 0.587 * g + 0.114 * b;
+      const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+      const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+      if (
+        yy > 60 && cb >= 77 && cb <= 135 && cr >= 133 && cr <= 180 &&
+        r > 60 && g > 30 && b > 15 && r > b && r >= g - 10
+      ) skin++;
+    }
+  }
+  const ratio = total > 0 ? skin / total : 0;
+  return { found: ratio >= 0.18, ratio };
+}
+
 interface FaceCheckResult {
   ok: boolean;
   faceOk: boolean;
@@ -96,6 +143,9 @@ function AttendancePage() {
   // Camera (face) verification for check-in
   const [faceVerify, setFaceVerify] = useState(true);
   const [camOpen, setCamOpen] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  // GPS status for this device/preview: blocked iframes fall back to the office location.
+  const [gpsStatus, setGpsStatus] = useState<"checking" | "ready" | "fallback" | "none">("checking");
   const camResolver = useRef<((r: FaceCheckResult) => void) | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -103,6 +153,24 @@ function AttendancePage() {
   useEffect(() => {
     return () => {
       streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
+
+  // Probe GPS once on page load so the employee sees up-front whether the live
+  // location will be used or the office fallback (blocked preview iframes).
+  useEffect(() => {
+    let alive = true;
+    getPosition().then(async (g) => {
+      if (!alive) return;
+      if (g.lat != null && g.lng != null) {
+        setGpsStatus("ready");
+        return;
+      }
+      const office = await getOfficeLocation();
+      if (alive) setGpsStatus(office ? "fallback" : "none");
+    });
+    return () => {
+      alive = false;
     };
   }, []);
 
@@ -138,21 +206,38 @@ function AttendancePage() {
   }
 
   async function verifyFaceNow() {
-    let faceOk = true;
-    let note: string | undefined;
     const video = videoRef.current;
+    if (!video) return;
+    setAnalyzing(true);
+    let faceOk = false;
+    let note: string | undefined;
+    // Prefer the native Shape-Detection API when the browser has it; otherwise
+    // analyze frames with the built-in canvas skin-tone detector above.
     const detector = (window as unknown as { FaceDetector?: new (o?: object) => { detect: (s: unknown) => Promise<{ length: number }> } }).FaceDetector;
-    if (video && detector) {
+    if (detector) {
       try {
         const faces = await new detector({ fastMode: true, maxDetectedFaces: 1 }).detect(video);
         faceOk = faces.length >= 1;
-        if (!faceOk) note = "No face detected — make sure you are in frame";
+        note = faceOk ? "Face detected in camera frame" : "No face detected — sit centered in frame and try again";
       } catch {
-        note = "Face detector could not run — camera frame accepted";
+        note = "Face detector could not run — analyzing frames directly";
       }
-    } else {
-      note = "Camera frame accepted (browser face API not available)";
     }
+    if (!detector) {
+      let best = 0;
+      let found = false;
+      for (let i = 0; i < 3 && !found; i++) {
+        const a = await analyzeVideoFrame(video);
+        best = Math.max(best, a.ratio);
+        if (a.found) found = true;
+        else await new Promise((r) => setTimeout(r, 150));
+      }
+      faceOk = found;
+      note = found
+        ? `Face detected in camera frame (${Math.round(best * 100)}% frame confidence)`
+        : "No face detected — sit centered in frame with good lighting and try again";
+    }
+    setAnalyzing(false);
     const r: FaceCheckResult = { ok: faceOk, faceOk, note };
     camResolver.current?.(r);
     camResolver.current = null;
@@ -247,6 +332,14 @@ function AttendancePage() {
                 <Camera className="h-3.5 w-3.5" /> Verify face + location on check-in
               </label>
             )}
+            {gpsStatus !== "none" && (
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className={`h-3 w-3 ${gpsStatus === "checking" ? "animate-pulse" : ""}`} />
+                {gpsStatus === "checking" && "Checking GPS…"}
+                {gpsStatus === "ready" && "GPS ready — your live location will be verified"}
+                {gpsStatus === "fallback" && "GPS blocked here — office location (15 m accuracy) will be used"}
+              </span>
+            )}
             {record && (
               <div className="ml-auto flex items-center gap-2 text-sm">
                 <StatusBadge status={record.status} />
@@ -288,12 +381,16 @@ function AttendancePage() {
                 Look straight at the camera, then press verify. Video never leaves your device — nothing is stored or uploaded.
               </p>
               <video ref={videoRef} autoPlay muted playsInline className="mx-auto w-full max-w-sm rounded-lg border bg-black" />
+              <p className="mt-1 text-center text-[11px] text-muted-foreground">
+                {analyzing ? "Analyzing camera frames…" : "3 live frames are analyzed on your device — nothing is uploaded."}
+              </p>
               <div className="mt-3 flex justify-end gap-2">
-                <Button variant="ghost" onClick={skipFace}>
+                <Button variant="ghost" onClick={skipFace} disabled={analyzing}>
                   Skip face check
                 </Button>
-                <Button onClick={verifyFaceNow}>
-                  <Camera className="mr-1 h-4 w-4" /> Verify & check in
+                <Button onClick={verifyFaceNow} disabled={analyzing}>
+                  {analyzing ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Camera className="mr-1 h-4 w-4" />}
+                  {analyzing ? "Analyzing…" : "Verify & check in"}
                 </Button>
               </div>
             </div>

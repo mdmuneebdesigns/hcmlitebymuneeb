@@ -419,6 +419,14 @@ export const deleteHoliday = createServerFn({ method: "POST" })
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+// Accepts "9:5"? no — accepts "HH:MM", "H:MM" and "HH:MM:SS" (Postgres time text)
+// and always returns "HH:MM"; anything else comes back unchanged (invalid).
+export function normalizeOfficeStart(raw: unknown): string {
+  const s = typeof raw === "string" ? raw.trim() : "";
+  const m = /^([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/.exec(s);
+  return m && m[1] && m[2] ? `${m[1].padStart(2, "0")}:${m[2]}` : s;
+}
+
 export interface CompanySettingsInput {
   name: string;
   officeStart: string;
@@ -438,8 +446,11 @@ export const updateCompanySettings = createServerFn({ method: "POST" })
     await requireAnyRole(context, "admin");
 
     const errors: string[] = [];
+    // The companies.office_start column is a Postgres time, which can come back
+    // as "HH:MM:SS" — normalize to HH:MM before validating.
+    const officeStart = normalizeOfficeStart(data.officeStart);
     if (!data.name || data.name.trim().length < 2) errors.push("Company name is required");
-    if (!data.officeStart || !TIME_RE.test(data.officeStart)) errors.push("Office start must be HH:MM");
+    if (!officeStart || !TIME_RE.test(officeStart)) errors.push("Office start must be HH:MM");
     if (typeof data.graceMinutes !== "number" || data.graceMinutes < 0 || data.graceMinutes > 120)
       errors.push("Grace time must be 0–120 minutes");
     if (typeof data.halfDayHours !== "number" || data.halfDayHours < 1 || data.halfDayHours > 8)
@@ -460,7 +471,7 @@ export const updateCompanySettings = createServerFn({ method: "POST" })
 
     const patch = {
       name: (data.name as string).trim(),
-      office_start: data.officeStart as string,
+      office_start: officeStart,
       grace_minutes: data.graceMinutes as number,
       half_day_hours: data.halfDayHours as number,
       weekend_days: data.weekendDays as string[],

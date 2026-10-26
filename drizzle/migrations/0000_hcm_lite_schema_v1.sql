@@ -139,7 +139,7 @@ create table public.attendance (
   check_out_lat double precision,
   check_out_lng double precision,
   check_out_accuracy_m numeric,
-  check_method text not null default 'web' check (check_method in ('web','camera')),
+  check_method text not null default 'web' check (check_method in ('web','camera','webcam','gps','webcam+gps')),
   face_ok boolean,
   created_at timestamptz not null default now(),
   unique (employee_id, work_date)
