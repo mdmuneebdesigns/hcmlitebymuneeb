@@ -37,7 +37,7 @@ Plan approved: `.lovable/plan/hcm-lite-master-architectural-implementation-plan-
 - [x] Guardrails: 15s timeout, friendly fallbacks, per-user rate limit, `ai_logs`, AI badge
 - [x] Camera + GPS geofence check-in (FaceDetector, skip option; server-side Haversine; `webcam`/`webcam+gps` check_method)
 - [x] README + .env.example — done; test credentials handed off in chat (Admin / HR / Employee)
-- [ ] Dark mode + PWA polish (optional bonus, not started)
+- [x] Dark mode toggle — verified: sun/moon button on every page (incl. /setup, /auth), persists across reloads, no first-paint flash, OS preference fallback (src/components/theme-toggle.tsx)
 
-## Demo state (as of 2026-10-25)
-Test logins: admin@saylani.test / hr@saylani.test / bilal@saylani.test — passwords in the chat handoff. Seeded during testing: company Saylani Test Corp, 3 employees, 1 attendance day, 1 approved leave, finalized Oct-2026 payroll run, 1 announcement. Judge Reset (Admin dashboard) wipes everything back to /setup.
+## Demo state (as of 2026-10-26)
+Database is intentionally EMPTY (fresh /setup state for judging — zero dummy data). Test flow verified end-to-end on 2026-10-26: /setup wizard → Admin auto sign-in → payroll draft run → payslip PDF download (October_2026_payslip.pdf, math + layout QA'd). Test data was wiped after verification. Create real accounts via /setup; Judge Reset (Admin dashboard) wipes everything back to /setup.
