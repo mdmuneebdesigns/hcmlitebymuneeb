@@ -119,7 +119,8 @@ async function analyzeVideoFrame(video: HTMLVideoElement): Promise<FrameAnalysis
 
 interface FaceCheckResult {
   ok: boolean;
-  faceOk: boolean;
+  /** undefined = camera verification was skipped (not "no face seen"). */
+  faceOk?: boolean;
   note?: string | undefined;
 }
 
@@ -246,7 +247,9 @@ function AttendancePage() {
   }
 
   function skipFace() {
-    camResolver.current?.({ ok: true, faceOk: false, note: "Checked in without camera verification" });
+    // Skipped verification means "not verified", NOT "no face seen" —
+    // faceOk: false would make the server reject the punch with a 422.
+    camResolver.current?.({ ok: true, note: "Checked in without camera verification" });
     camResolver.current = null;
     stopCamera();
   }
