@@ -83,6 +83,7 @@ export async function ensureOwnEmployeeProfile(context: AuthedLike): Promise<str
 
   const email = await actorEmail(context);
   if (!email) return null;
+  const userEmail: string = email;
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: auth } = await context.supabase.auth.getUser();
