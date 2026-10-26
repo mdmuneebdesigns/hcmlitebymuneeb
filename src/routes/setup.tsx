@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { completeFirstRunSetup } from "@/lib/setup.functions";
+import { getRealUserLocation } from "@/lib/geo";
+import { PasswordStrengthChecklist, isPasswordStrong } from "@/components/password-checklist";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/setup")({
@@ -61,27 +63,16 @@ function SetupPage() {
     toast.success("Karachi IT Park default location set (24.8607, 67.0011)");
   }
 
-  function useMyLocation() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setOfficeLat(DEFAULT_LAT);
-      setOfficeLng(DEFAULT_LNG);
-      toast.info("GPS not available — using Karachi IT Park default location");
-      return;
+  /** Multi-stage resolver: GPS → Wi-Fi GPS → IP geolocation → silent default. */
+  async function detectMyLocation() {
+    const loc = await getRealUserLocation(true);
+    setOfficeLat(loc.lat.toFixed(6));
+    setOfficeLng(loc.lng.toFixed(6));
+    if (loc.source === "default") {
+      toast.info("Offline — using Karachi IT Park default location");
+    } else {
+      toast.success(`Live location detected (${loc.source === "ip" ? "IP trace" : "GPS"})`);
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setOfficeLat(Number(pos.coords.latitude.toFixed(6)).toString());
-        setOfficeLng(Number(pos.coords.longitude.toFixed(6)).toString());
-        toast.success("Office location captured");
-      },
-      () => {
-        // Blocked or timed out — never throw, fall back to the default.
-        setOfficeLat(DEFAULT_LAT);
-        setOfficeLng(DEFAULT_LNG);
-        toast.info("GPS blocked or timed out — using Karachi IT Park default location");
-      },
-      { timeout: 3000, maximumAge: 60000 },
-    );
   }
 
   function validateStep1(): boolean {
@@ -114,8 +105,8 @@ function SetupPage() {
       toast.error("Enter a valid Admin email");
       return false;
     }
-    if (adminPassword.length < 8) {
-      toast.error("Admin password must be at least 8 characters");
+    if (!isPasswordStrong(adminPassword)) {
+      toast.error("Admin password must meet all 5 requirements below");
       return false;
     }
     return true;
