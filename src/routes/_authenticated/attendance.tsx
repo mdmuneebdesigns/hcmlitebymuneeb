@@ -79,7 +79,7 @@ async function analyzeVideoFrame(video: HTMLVideoElement): Promise<FrameAnalysis
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) return { found: false, ratio: 0 };
+  if (!ctx) return { found: false, ratio: 0, bbox: null };
   ctx.drawImage(video, 0, 0, w, h);
   const { data } = ctx.getImageData(0, 0, w, h);
   // central region: a face should be roughly centered in the frame
