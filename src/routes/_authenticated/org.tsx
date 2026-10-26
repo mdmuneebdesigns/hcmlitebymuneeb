@@ -39,6 +39,7 @@ import {
   updateLeaveType,
   type OrgData,
 } from "@/lib/org.functions";
+import { getRealUserLocation } from "@/lib/geo";
 
 export const Route = createFileRoute("/_authenticated/org")({
   loader: async () => {
@@ -684,6 +685,7 @@ function SettingsTab({ data }: { data: OrgData }) {
             <Input id="co-lng" value={lng} onChange={(e) => setLng(e.target.value)} />
           </div>
           <div className="flex flex-wrap items-end gap-2">
+            <Button variant="outline" onClick={setKarachiDefault}>📍 Karachi IT Park Default (24.8607, 67.0011)</Button>
             <Button variant="outline" onClick={detectMyLocation}>📍 Detect My Live Location</Button>
             <Button variant="outline" onClick={detectMyLocation}>🏢 Sync Office Geofence to My Current Location</Button>
           </div>
