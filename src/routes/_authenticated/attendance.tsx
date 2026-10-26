@@ -206,21 +206,38 @@ function AttendancePage() {
   }
 
   async function verifyFaceNow() {
-    let faceOk = true;
-    let note: string | undefined;
     const video = videoRef.current;
+    if (!video) return;
+    setAnalyzing(true);
+    let faceOk = false;
+    let note: string | undefined;
+    // Prefer the native Shape-Detection API when the browser has it; otherwise
+    // analyze frames with the built-in canvas skin-tone detector above.
     const detector = (window as unknown as { FaceDetector?: new (o?: object) => { detect: (s: unknown) => Promise<{ length: number }> } }).FaceDetector;
-    if (video && detector) {
+    if (detector) {
       try {
         const faces = await new detector({ fastMode: true, maxDetectedFaces: 1 }).detect(video);
         faceOk = faces.length >= 1;
-        if (!faceOk) note = "No face detected — make sure you are in frame";
+        note = faceOk ? "Face detected in camera frame" : "No face detected — sit centered in frame and try again";
       } catch {
-        note = "Face detector could not run — camera frame accepted";
+        note = "Face detector could not run — analyzing frames directly";
       }
-    } else {
-      note = "Camera frame accepted (browser face API not available)";
     }
+    if (!detector) {
+      let best = 0;
+      let found = false;
+      for (let i = 0; i < 3 && !found; i++) {
+        const a = await analyzeVideoFrame(video);
+        best = Math.max(best, a.ratio);
+        if (a.found) found = true;
+        else await new Promise((r) => setTimeout(r, 150));
+      }
+      faceOk = found;
+      note = found
+        ? `Face detected in camera frame (${Math.round(best * 100)}% frame confidence)`
+        : "No face detected — sit centered in frame with good lighting and try again";
+    }
+    setAnalyzing(false);
     const r: FaceCheckResult = { ok: faceOk, faceOk, note };
     camResolver.current?.(r);
     camResolver.current = null;
