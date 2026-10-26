@@ -100,9 +100,9 @@ async function analyzeVideoFrame(video: HTMLVideoElement): Promise<FrameAnalysis
   for (let y = y0; y < y1; y += 2) {
     for (let x = x0; x < x1; x += 2) {
       const i = (y * w + x) * 4;
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
+      const r = data[i] ?? 0;
+      const g = data[i + 1] ?? 0;
+      const b = data[i + 2] ?? 0;
       total++;
       const yy = 0.299 * r + 0.587 * g + 0.114 * b;
       const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
