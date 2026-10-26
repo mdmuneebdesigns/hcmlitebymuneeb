@@ -424,7 +424,7 @@ const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Satur
 export function normalizeOfficeStart(raw: unknown): string {
   const s = typeof raw === "string" ? raw.trim() : "";
   const m = /^([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/.exec(s);
-  return m ? `${m[1].padStart(2, "0")}:${m[2]}` : s;
+  return m && m[1] && m[2] ? `${m[1].padStart(2, "0")}:${m[2]}` : s;
 }
 
 export interface CompanySettingsInput {
