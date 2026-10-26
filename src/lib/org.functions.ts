@@ -440,9 +440,7 @@ export const updateCompanySettings = createServerFn({ method: "POST" })
     const errors: string[] = [];
     // The companies.office_start column is a Postgres time, which can come back
     // as "HH:MM:SS" — normalize to HH:MM before validating.
-    const rawStart = typeof data.officeStart === "string" ? data.officeStart.trim() : "";
-    const startMatch = /^([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/.exec(rawStart);
-    const officeStart = startMatch ? `${startMatch[1].padStart(2, "0")}:${startMatch[2]}` : rawStart;
+    const officeStart = normalizeOfficeStart(data.officeStart);
     if (!data.name || data.name.trim().length < 2) errors.push("Company name is required");
     if (!officeStart || !TIME_RE.test(officeStart)) errors.push("Office start must be HH:MM");
     if (typeof data.graceMinutes !== "number" || data.graceMinutes < 0 || data.graceMinutes > 120)
