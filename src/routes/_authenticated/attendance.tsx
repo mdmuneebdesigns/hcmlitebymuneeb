@@ -332,6 +332,14 @@ function AttendancePage() {
                 <Camera className="h-3.5 w-3.5" /> Verify face + location on check-in
               </label>
             )}
+            {gpsStatus !== "none" && (
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className={`h-3 w-3 ${gpsStatus === "checking" ? "animate-pulse" : ""}`} />
+                {gpsStatus === "checking" && "Checking GPS…"}
+                {gpsStatus === "ready" && "GPS ready — your live location will be verified"}
+                {gpsStatus === "fallback" && "GPS blocked here — office location (15 m accuracy) will be used"}
+              </span>
+            )}
             {record && (
               <div className="ml-auto flex items-center gap-2 text-sm">
                 <StatusBadge status={record.status} />
