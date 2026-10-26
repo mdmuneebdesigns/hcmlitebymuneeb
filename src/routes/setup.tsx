@@ -242,8 +242,11 @@ function SetupPage() {
                   <Button type="button" variant="outline" size="sm" onClick={setKarachiDefault}>
                     📍 Use Karachi IT Park Default (24.8607, 67.0011)
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={useMyLocation}>
-                    <MapPin className="h-4 w-4" /> Use my current location
+                  <Button type="button" variant="outline" size="sm" onClick={detectMyLocation}>
+                    <MapPin className="h-4 w-4" /> Detect My Live Location
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={detectMyLocation}>
+                    🏢 Sync Office Geofence to My Current Location
                   </Button>
                 </div>
               </div>
@@ -280,14 +283,15 @@ function SetupPage() {
                 <Input id="adminEmail" type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder="admin@company.com" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="adminPassword">Password (min 8 characters)</Label>
+                <Label htmlFor="adminPassword">Password</Label>
                 <Input id="adminPassword" type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="••••••••" />
+                <PasswordStrengthChecklist password={adminPassword} />
               </div>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(1)} disabled={loading}>
                   Back
                 </Button>
-                <Button type="button" className="flex-1" onClick={handleSubmit} disabled={loading}>
+                <Button type="button" className="flex-1" onClick={handleSubmit} disabled={loading || !isPasswordStrong(adminPassword)}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   Create company
                 </Button>
