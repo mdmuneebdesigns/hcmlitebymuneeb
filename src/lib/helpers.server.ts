@@ -71,3 +71,70 @@ export async function userIdsWithRole(
     .select("user_id, role");
   return (rows ?? []).filter((r) => roles.includes(r.role as string)).map((r) => r.user_id);
 }
+
+/**
+ * Never block attendance/leave on a missing profile: Admin/HR accounts created
+ * during first-run setup have no employees row. Auto-create and link one on
+ * the fly (privileged write via the service-role client).
+ */
+export async function ensureOwnEmployeeProfile(context: AuthedLike): Promise<string | null> {
+  const existing = await getOwnEmployeeId(context);
+  if (existing) return existing;
+
+  const email = await actorEmail(context);
+  if (!email) return null;
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: auth } = await context.supabase.auth.getUser();
+  const fullName =
+    ((auth?.user_metadata as { full_name?: string } | undefined)?.full_name ?? "").trim() ||
+    email.split("@")[0];
+  const joinDate = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Karachi",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const employeeCode = `EMP-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const { data, error } = await supabaseAdmin
+      .from("employees")
+      .insert({
+        user_id: context.userId,
+        employee_code: employeeCode,
+        full_name: fullName,
+        email,
+        join_date: joinDate,
+        status: "active",
+        // Placeholder salary so the auto-linked profile never distorts payroll.
+        basic_salary: 1,
+        must_change_password: false,
+      })
+      .select("id")
+      .single();
+    if (!error && data) return data.id as string;
+
+    const message = error?.message ?? "";
+    if (message.includes("employees_email_key")) {
+      // An unlinked employee row already uses this email — adopt it.
+      const { data: byEmail } = await supabaseAdmin
+        .from("employees")
+        .select("id, user_id")
+        .eq("email", email)
+        .maybeSingle();
+      if (byEmail) {
+        if (!byEmail.user_id) {
+          await supabaseAdmin
+            .from("employees")
+            .update({ user_id: context.userId })
+            .eq("id", byEmail.id as string);
+        }
+        return byEmail.id as string;
+      }
+      return null;
+    }
+    // Anything else (e.g. a duplicate employee_code) — regenerate and retry.
+  }
+  return null;
+}
