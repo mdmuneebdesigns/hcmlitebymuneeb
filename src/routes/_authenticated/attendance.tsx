@@ -7,11 +7,13 @@ import { toast } from "sonner";
 import {
   CalendarDays,
   CheckCircle2,
+  Circle,
   LogIn,
   LogOut,
   Loader2,
   MapPin,
   Camera,
+  RefreshCw,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,9 +42,11 @@ import {
   listAllCorrections,
   listMyCorrections,
   requestCorrection,
+  syncOfficeGeofence,
   type DayBoardRow,
 } from "@/lib/attendance.functions";
-import { pktStamp } from "@/lib/rules/attendance-rules";
+import { getRealUserLocation, type ResolvedLocation } from "@/lib/geo";
+import { haversineMeters, pktStamp } from "@/lib/rules/attendance-rules";
 import { StatusBadge } from "@/components/status-badge";
 
 export const Route = createFileRoute("/_authenticated/attendance")({
@@ -56,23 +60,11 @@ interface Geo {
   accuracyM: number | null;
 }
 
-function getPosition(): Promise<Geo> {
-  return new Promise((resolve) => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      resolve({ lat: null, lng: null, accuracyM: null });
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracyM: pos.coords.accuracy }),
-      () => resolve({ lat: null, lng: null, accuracyM: null }),
-      { timeout: 3000, maximumAge: 30000 },
-    );
-  });
-}
-
 interface FrameAnalysis {
   found: boolean;
   ratio: number;
+  /** Bounding box of the detected face/skin region, normalized 0..1. */
+  bbox: { x: number; y: number; w: number; h: number } | null;
 }
 
 // Real client-side frame analysis: grabs a video frame into a canvas and runs
@@ -97,6 +89,10 @@ async function analyzeVideoFrame(video: HTMLVideoElement): Promise<FrameAnalysis
   const y1 = Math.ceil(h * 0.92);
   let skin = 0;
   let total = 0;
+  let minX = w;
+  let maxX = 0;
+  let minY = h;
+  let maxY = 0;
   for (let y = y0; y < y1; y += 2) {
     for (let x = x0; x < x1; x += 2) {
       const i = (y * w + x) * 4;
@@ -110,11 +106,26 @@ async function analyzeVideoFrame(video: HTMLVideoElement): Promise<FrameAnalysis
       if (
         yy > 60 && cb >= 77 && cb <= 135 && cr >= 133 && cr <= 180 &&
         r > 60 && g > 30 && b > 15 && r > b && r >= g - 10
-      ) skin++;
+      ) {
+        skin++;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
     }
   }
   const ratio = total > 0 ? skin / total : 0;
-  return { found: ratio >= 0.18, ratio };
+  const bbox =
+    skin > 0
+      ? {
+          x: minX / w,
+          y: minY / h,
+          w: Math.max(1, maxX - minX) / w,
+          h: Math.max(1, maxY - minY) / h,
+        }
+      : null;
+  return { found: ratio >= 0.18, ratio, bbox };
 }
 
 interface FaceCheckResult {
