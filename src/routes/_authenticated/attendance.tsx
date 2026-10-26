@@ -342,24 +342,22 @@ function AttendancePage() {
   async function punch(kind: "in" | "out") {
     setBusy(kind);
     let faceOk: boolean | undefined;
-    if (kind === "in" && faceVerify) {
-      const cam = await openCamera();
+    if (faceVerify) {
+      const cam = await openCamera(kind);
       if (!cam.ok) {
         setBusy(null);
-        return; // camera denied or no face — toast already shown / dialog cancelled
+        return; // camera denied or dialog cancelled — toast already shown
       }
       faceOk = cam.faceOk;
       if (cam.note) toast.info(cam.note);
     }
-    let geo = await getPosition();
-    if (geo.lat == null || geo.lng == null) {
-      // Preview iframes often block GPS — fall back to the configured office
+    const loc = await getRealUserLocation();
+    let geo: Geo = { lat: loc.lat, lng: loc.lng, accuracyM: loc.accuracyM };
+    if (loc.source === "default") {
+      // Fully offline — silently fall back to the configured office
       // coordinates (15 m accuracy) so the geofence check passes smoothly.
-      const office = await getOfficeLocation();
-      if (office) {
-        geo = { lat: office.lat, lng: office.lng, accuracyM: 15 };
-        toast.info("GPS not available — using office location (15 m accuracy)");
-      }
+      const o = await getOfficeLocation();
+      if (o) geo = { lat: o.lat, lng: o.lng, accuracyM: 15 };
     }
     const result = kind === "in"
       ? await checkInFn({ data: { lat: geo.lat, lng: geo.lng, accuracyM: geo.accuracyM, faceOk } })
@@ -409,17 +407,15 @@ function AttendancePage() {
               {busy === "out" ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <LogOut className="mr-1 h-4 w-4" />}
               {checkedOut ? "Checked out" : "Check out"}
             </Button>
-            {!checkedIn && (
-              <label className="ml-2 inline-flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={faceVerify}
-                  onChange={(e) => setFaceVerify(e.target.checked)}
-                  className="h-4 w-4 accent-[hsl(var(--primary))]"
-                />
-                <Camera className="h-3.5 w-3.5" /> Verify face + location on check-in
-              </label>
-            )}
+            <label className="ml-2 inline-flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={faceVerify}
+                onChange={(e) => setFaceVerify(e.target.checked)}
+                className="h-4 w-4 accent-[hsl(var(--primary))]"
+              />
+              <Camera className="h-3.5 w-3.5" /> Verify face + location on check-in / check-out
+            </label>
             {gpsStatus !== "none" && (
               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <MapPin className={`h-3 w-3 ${gpsStatus === "checking" ? "animate-pulse" : ""}`} />
@@ -463,22 +459,76 @@ function AttendancePage() {
 
         {camOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-            <div className="w-full max-w-md rounded-xl border bg-background p-4 shadow-2xl">
-              <p className="text-sm font-semibold text-foreground">Face verification</p>
-              <p className="mb-2 text-xs text-muted-foreground">
-                Look straight at the camera, then press verify. Video never leaves your device — nothing is stored or uploaded.
-              </p>
-              <video ref={videoRef} autoPlay muted playsInline className="mx-auto w-full max-w-sm rounded-lg border bg-black" />
-              <p className="mt-1 text-center text-[11px] text-muted-foreground">
-                {analyzing ? "Analyzing camera frames…" : "3 live frames are analyzed on your device — nothing is uploaded."}
-              </p>
-              <div className="mt-3 flex justify-end gap-2">
-                <Button variant="ghost" onClick={skipFace} disabled={analyzing}>
-                  Skip face check
+            <div className="w-full max-w-md space-y-3 rounded-xl border bg-background p-4 shadow-2xl">
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  {camMode === "in" ? "Camera check-in" : "Camera check-out"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Live face detection runs on your device — video never leaves it. Nothing is stored or uploaded.
+                </p>
+              </div>
+              <div className="relative mx-auto w-full max-w-sm">
+                <video ref={videoRef} autoPlay muted playsInline className="w-full rounded-lg border bg-black" />
+                <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" />
+              </div>
+              <div className="space-y-1.5 rounded-md border bg-muted/40 p-3 text-xs">
+                <p
+                  className={
+                    faceState.found
+                      ? "flex items-center gap-2 font-medium text-emerald-700"
+                      : "flex items-center gap-2 text-muted-foreground"
+                  }
+                >
+                  {faceState.found ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Circle className="h-3 w-3" />}
+                  {faceState.found
+                    ? `Camera Active & Face Detected (1 face in frame — ${Math.round(faceState.ratio * 100)}% confidence)`
+                    : "Detecting face — sit centered in the frame with good lighting"}
+                </p>
+                {camGeo === null ? (
+                  <p className="flex items-center gap-2 text-muted-foreground">
+                    <Circle className="h-3 w-3" /> Tracing live GPS coordinates…
+                  </p>
+                ) : camGeo.source === "default" ? (
+                  <p className="flex items-center gap-2 text-muted-foreground">
+                    <Circle className="h-3 w-3" /> Offline — office location (15 m accuracy) will be used
+                  </p>
+                ) : (
+                  <p className="flex items-center gap-2 font-medium text-emerald-700">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {"Live GPS Coordinates Traced: "}
+                    [{camGeo.lat.toFixed(4)}, {camGeo.lng.toFixed(4)}]
+                    {office &&
+                      ` (Distance: ${Math.round(haversineMeters(camGeo.lat, camGeo.lng, office.lat, office.lng))} m from office — ${
+                        haversineMeters(camGeo.lat, camGeo.lng, office.lat, office.lng) <= office.radiusM
+                          ? "Inside"
+                          : "Outside"
+                      } Geofence)`}
+                  </p>
+                )}
+              </div>
+              {isManager && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={syncGeofenceToMe}
+                  disabled={syncingGeo}
+                >
+                  {syncingGeo ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1 h-4 w-4" />}
+                  🔄 Sync Office Geofence to My Current GPS
                 </Button>
-                <Button onClick={verifyFaceNow} disabled={analyzing}>
-                  {analyzing ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Camera className="mr-1 h-4 w-4" />}
-                  {analyzing ? "Analyzing…" : "Verify & check in"}
+              )}
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={skipFace}>
+                  Skip camera check
+                </Button>
+                <Button
+                  onClick={confirmCamera}
+                  disabled={!faceState.found || !camGeo || camGeo.source === "default"}
+                >
+                  {camMode === "in" ? "Confirm Camera Check-In" : "Confirm Camera Check-Out"}
                 </Button>
               </div>
             </div>
