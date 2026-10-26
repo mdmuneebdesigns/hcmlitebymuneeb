@@ -105,7 +105,7 @@ export async function ensureOwnEmployeeProfile(context: AuthedLike): Promise<str
         user_id: context.userId,
         employee_code: employeeCode,
         full_name: fullName,
-        email,
+        email: userEmail,
         join_date: joinDate,
         status: "active",
         // Placeholder salary so the auto-linked profile never distorts payroll.
