@@ -150,16 +150,25 @@ function AttendancePage() {
 
   const checkInFn = useServerFn(checkIn);
   const checkOutFn = useServerFn(checkOut);
+  const syncOfficeGeofenceFn = useServerFn(syncOfficeGeofence);
   const [busy, setBusy] = useState<"in" | "out" | null>(null);
 
-  // Camera (face) verification for check-in
+  // Camera (face) verification for check-in AND check-out
   const [faceVerify, setFaceVerify] = useState(true);
   const [camOpen, setCamOpen] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
-  // GPS status for this device/preview: blocked iframes fall back to the office location.
+  const [camMode, setCamMode] = useState<"in" | "out">("in");
+  // Live analysis result while the camera dialog is open.
+  const [faceState, setFaceState] = useState<FrameAnalysis>({ found: false, ratio: 0, bbox: null });
+  // Live location resolved while the camera dialog is open.
+  const [camGeo, setCamGeo] = useState<ResolvedLocation | null>(null);
+  // Office coords/radius for the live distance readout inside the dialog.
+  const [office, setOffice] = useState<{ lat: number; lng: number; radiusM: number } | null>(null);
+  const [syncingGeo, setSyncingGeo] = useState(false);
+  // GPS status for this device/preview: blocked iframes resolve via IP or fall back.
   const [gpsStatus, setGpsStatus] = useState<"checking" | "ready" | "fallback" | "none">("checking");
   const camResolver = useRef<((r: FaceCheckResult) => void) | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
@@ -168,18 +177,17 @@ function AttendancePage() {
     };
   }, []);
 
-  // Probe GPS once on page load so the employee sees up-front whether the live
-  // location will be used or the office fallback (blocked preview iframes).
+  // Resolve the location once on page load so the employee sees up-front
+  // whether live coordinates will be used. No toasts on mount — the single
+  // status chip below shows the result.
   useEffect(() => {
     let alive = true;
-    getPosition().then(async (g) => {
+    getRealUserLocation().then((loc) => {
       if (!alive) return;
-      if (g.lat != null && g.lng != null) {
-        setGpsStatus("ready");
-        return;
-      }
-      const office = await getOfficeLocation();
-      if (alive) setGpsStatus(office ? "fallback" : "none");
+      setGpsStatus(loc.source === "default" ? "fallback" : "ready");
+    });
+    getOfficeLocation().then((o) => {
+      if (alive) setOffice(o);
     });
     return () => {
       alive = false;
