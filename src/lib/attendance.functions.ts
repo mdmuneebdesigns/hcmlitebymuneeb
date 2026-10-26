@@ -489,3 +489,37 @@ export const getOfficeLocation = createServerFn({ method: "GET" })
     if (!data) return null;
     return { lat: data.office_lat, lng: data.office_lng, radiusM: data.geofence_radius_m };
   });
+
+// ---------- Geofence sync (HR/Admin): point the office at the caller's live location ----------
+export const syncOfficeGeofence = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { lat: number; lng: number }) => input)
+  .handler(async ({ context, data }): Promise<SimpleResult> => {
+    await requireAnyRole(context, "hr", "admin");
+    if (
+      !Number.isFinite(data.lat) || Math.abs(data.lat) > 90 ||
+      !Number.isFinite(data.lng) || Math.abs(data.lng) > 180
+    ) {
+      return { ok: false, error: "Enter valid coordinates" };
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: company } = await supabaseAdmin.from("companies").select("id").limit(1).maybeSingle();
+    if (!company) return { ok: false, error: "No company found — finish the setup wizard" };
+
+    const { error } = await supabaseAdmin
+      .from("companies")
+      .update({ office_lat: data.lat, office_lng: data.lng })
+      .eq("id", company.id as string);
+    if (error) return { ok: false, error: "Could not sync the office geofence" };
+
+    await writeAudit(supabaseAdmin, {
+      actorId: context.userId,
+      actorEmail: await actorEmail(context),
+      action: "company.geofence_sync",
+      entity: "companies",
+      entityId: company.id as string,
+      after: { office_lat: data.lat, office_lng: data.lng },
+    });
+    return { ok: true };
+  });
