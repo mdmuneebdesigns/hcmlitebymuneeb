@@ -89,7 +89,7 @@ export async function ensureOwnEmployeeProfile(context: AuthedLike): Promise<str
   const { data: auth } = await context.supabase.auth.getUser();
   const fullName =
     ((auth?.user as { user_metadata?: { full_name?: string } } | undefined)?.user_metadata?.full_name ?? "").trim() ||
-    email.split("@")[0];
+    (email.split("@")[0] ?? email);
   const joinDate = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Karachi",
     year: "numeric",
