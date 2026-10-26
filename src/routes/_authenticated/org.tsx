@@ -572,7 +572,7 @@ function SettingsTab({ data }: { data: OrgData }) {
     const c = data.company;
     if (!c) return;
     setName(c.name);
-    setOfficeStart(c.office_start);
+    setOfficeStart(c.office_start.slice(0, 5));
     setGrace(String(c.grace_minutes));
     setHalfDay(String(c.half_day_hours));
     setWeekend(c.weekend_days);
