@@ -8,6 +8,13 @@
       "when": 1792873463670,
       "tag": "0000_hcm_lite_schema_v1",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793036131051,
+      "tag": "0001_tighten_reference_table_rls",
+      "breakpoints": true
     }
   ]
 }
