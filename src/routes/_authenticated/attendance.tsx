@@ -373,12 +373,16 @@ function AttendancePage() {
                 Look straight at the camera, then press verify. Video never leaves your device — nothing is stored or uploaded.
               </p>
               <video ref={videoRef} autoPlay muted playsInline className="mx-auto w-full max-w-sm rounded-lg border bg-black" />
+              <p className="mt-1 text-center text-[11px] text-muted-foreground">
+                {analyzing ? "Analyzing camera frames…" : "3 live frames are analyzed on your device — nothing is uploaded."}
+              </p>
               <div className="mt-3 flex justify-end gap-2">
-                <Button variant="ghost" onClick={skipFace}>
+                <Button variant="ghost" onClick={skipFace} disabled={analyzing}>
                   Skip face check
                 </Button>
-                <Button onClick={verifyFaceNow}>
-                  <Camera className="mr-1 h-4 w-4" /> Verify & check in
+                <Button onClick={verifyFaceNow} disabled={analyzing}>
+                  {analyzing ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Camera className="mr-1 h-4 w-4" />}
+                  {analyzing ? "Analyzing…" : "Verify & check in"}
                 </Button>
               </div>
             </div>
