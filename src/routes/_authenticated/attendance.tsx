@@ -70,6 +70,53 @@ function getPosition(): Promise<Geo> {
   });
 }
 
+interface FrameAnalysis {
+  found: boolean;
+  ratio: number;
+}
+
+// Real client-side frame analysis: grabs a video frame into a canvas and runs
+// a YCbCr skin-tone detector over the central region (where a face is expected).
+// Works in every browser — no FaceDetector API or model download required.
+async function analyzeVideoFrame(video: HTMLVideoElement): Promise<FrameAnalysis> {
+  const vw = video.videoWidth || 640;
+  const vh = video.videoHeight || 480;
+  const w = 320;
+  const h = Math.max(1, Math.round((vh / vw) * w));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return { found: false, ratio: 0 };
+  ctx.drawImage(video, 0, 0, w, h);
+  const { data } = ctx.getImageData(0, 0, w, h);
+  // central region: a face should be roughly centered in the frame
+  const x0 = Math.floor(w * 0.2);
+  const x1 = Math.ceil(w * 0.8);
+  const y0 = Math.floor(h * 0.08);
+  const y1 = Math.ceil(h * 0.92);
+  let skin = 0;
+  let total = 0;
+  for (let y = y0; y < y1; y += 2) {
+    for (let x = x0; x < x1; x += 2) {
+      const i = (y * w + x) * 4;
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      total++;
+      const yy = 0.299 * r + 0.587 * g + 0.114 * b;
+      const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+      const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+      if (
+        yy > 60 && cb >= 77 && cb <= 135 && cr >= 133 && cr <= 180 &&
+        r > 60 && g > 30 && b > 15 && r > b && r >= g - 10
+      ) skin++;
+    }
+  }
+  const ratio = total > 0 ? skin / total : 0;
+  return { found: ratio >= 0.18, ratio };
+}
+
 interface FaceCheckResult {
   ok: boolean;
   faceOk: boolean;
