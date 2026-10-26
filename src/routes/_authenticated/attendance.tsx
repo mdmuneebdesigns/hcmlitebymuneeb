@@ -249,7 +249,7 @@ function AttendancePage() {
   function skipFace() {
     // Skipped verification means "not verified", NOT "no face seen" —
     // faceOk: false would make the server reject the punch with a 422.
-    camResolver.current?.({ ok: true, faceOk: undefined, note: "Checked in without camera verification" });
+    camResolver.current?.({ ok: true, note: "Checked in without camera verification" });
     camResolver.current = null;
     stopCamera();
   }
