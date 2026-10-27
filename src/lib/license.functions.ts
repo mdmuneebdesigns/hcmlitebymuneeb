@@ -79,11 +79,16 @@ export const validateLicenseKey = createServerFn({ method: "POST" })
   .inputValidator((input: { licenseKey?: string; deviceHash?: string | null }) => {
     return { licenseKey: (input.licenseKey ?? "").trim().toUpperCase(), deviceHash: input.deviceHash ?? null };
   })
-  .handler(async ({ data }): Promise<LicenseCheckResult> => {
+  .handler(async ({ data, context }): Promise<LicenseCheckResult> => {
     if (!data.licenseKey) return { ok: false, error: "Enter your license key" };
 
-    // Owner master key is always valid for the owner's own testing.
+    // Owner master key: only the platform owner's own account may use it.
     if (data.licenseKey === MASTER_SETUP_KEY) {
+      const { data: userData } = await context.supabase.auth.getUser();
+      const email = userData.user?.email ?? "";
+      if (email.toLowerCase() !== OWNER_EMAIL) {
+        return { ok: false, error: "This master key is reserved for the platform owner" };
+      }
       return { ok: true, plan: "lifetime", expiresAt: null, master: true };
     }
     if (!planFromKey(data.licenseKey)) {
