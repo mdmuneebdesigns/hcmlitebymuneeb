@@ -93,6 +93,7 @@ function SuperAdminPage() {
   const [genPlan, setGenPlan] = useState<LicensePlan>("monthly_30d");
   const [genName, setGenName] = useState("");
   const [genEmail, setGenEmail] = useState("");
+  const [genPhone, setGenPhone] = useState("");
   const [genCompany, setGenCompany] = useState("");
   const [lastGenerated, setLastGenerated] = useState<{ key: string; plan: LicensePlan } | null>(null);
   const [copied, setCopied] = useState(false);

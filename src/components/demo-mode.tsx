@@ -10,7 +10,7 @@ import {
   FileText,
   Fingerprint,
   MessageCircle,
-  Phone,
+  MessageCircle,
   Send,
   Users,
   X,
