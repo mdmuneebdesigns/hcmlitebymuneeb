@@ -134,7 +134,13 @@ export function EnterpriseDemoSection() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-8 grid gap-4 md:grid-cols-2" noValidate={false}>
+          <form
+            ref={formRef}
+            action="https://formsubmit.co/mdmuneebdesigns@gmail.com"
+            method="POST"
+            onSubmit={handleSubmit}
+            className="mt-8 grid gap-4 md:grid-cols-2"
+          >
             {/* Hidden FormSubmit configuration */}
             <input type="hidden" name="_subject" value="🚀 New HCM Lite Enterprise Demo / License Inquiry!" />
             <input type="hidden" name="_template" value="table" />
