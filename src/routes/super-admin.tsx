@@ -303,7 +303,7 @@ function SuperAdminPage() {
                 <CardDescription>Generate a 1-device-locked key and send it to the client on WhatsApp.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid gap-3 sm:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                   <div className="space-y-2">
                     <Label htmlFor="genPlan">Plan</Label>
                     <select
@@ -324,6 +324,10 @@ function SuperAdminPage() {
                   <div className="space-y-2">
                     <Label htmlFor="genEmail">Client email</Label>
                     <Input id="genEmail" type="email" value={genEmail} onChange={(e) => setGenEmail(e.target.value)} placeholder="client@company.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="genPhone">Client WhatsApp (optional)</Label>
+                    <Input id="genPhone" value={genPhone} onChange={(e) => setGenPhone(e.target.value)} placeholder="+92 300 1234567" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="genCompany">Company</Label>
