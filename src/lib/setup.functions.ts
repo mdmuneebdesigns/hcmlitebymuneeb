@@ -187,6 +187,46 @@ export const completeFirstRunSetup = createServerFn({ method: "POST" })
       .single();
     if (companyError || !company) return { ok: false, error: "Could not create the company profile" };
 
+    // 2b. Bind the license to this device + company (first-device claim).
+    if (licenseKey === MASTER_SETUP_KEY) {
+      // Owner-reserved master key: auto-provision it as a lifetime license.
+      await supabaseAdmin
+        .from("workspace_licenses")
+        .upsert(
+          {
+            license_key: licenseKey,
+            plan_type: "lifetime",
+            status: "active",
+            max_devices: 99,
+            company_id: company.id,
+            assigned_email: email,
+            assigned_company_name: data.companyName.trim(),
+            bound_device_hash: data.deviceHash,
+            bound_device_info: data.deviceInfo,
+            activated_at: new Date().toISOString(),
+            last_active_at: new Date().toISOString(),
+          },
+          { onConflict: "license_key" },
+        );
+    } else {
+      const { error: bindError } = await supabaseAdmin
+        .from("workspace_licenses")
+        .update({
+          status: "active",
+          company_id: company.id,
+          assigned_email: email,
+          assigned_company_name: data.companyName.trim(),
+          bound_device_hash: data.deviceHash,
+          bound_device_info: data.deviceInfo,
+          activated_at: new Date().toISOString(),
+          last_active_at: new Date().toISOString(),
+        })
+        .eq("license_key", licenseKey)
+        .is("bound_device_hash", null);
+      if (bindError) return { ok: false, error: "Company created but the license could not be claimed — contact support" };
+    }
+
+
     // 3. Seed the standard leave types (org config, not demo data).
     const { error: ltError } = await supabaseAdmin.from("leave_types").insert([
       { name: "Annual", annual_quota: 14, is_paid: true },
@@ -207,6 +247,14 @@ export const completeFirstRunSetup = createServerFn({ method: "POST" })
         after_json: { name: data.companyName, office_start: data.officeStart, geofence_radius_m: data.geofenceRadiusM },
       },
       { actor_id: userId, actor_email: email, action: "role.assign", entity: "user_role", entity_id: userId, after_json: { role: "admin" } },
+      {
+        actor_id: userId,
+        actor_email: email,
+        action: "license.claim",
+        entity: "workspace_license",
+        entity_id: licenseKey,
+        after_json: { company_id: company.id, device: data.deviceInfo, plan: licenseKey === MASTER_SETUP_KEY ? "lifetime" : "purchased" },
+      },
     ]);
 
     return { ok: true };
