@@ -391,6 +391,19 @@ function SuperAdminPage() {
                       <Button size="sm" variant="outline" onClick={() => void handleCopyKey(lic.license_key)}>
                         <Copy className="h-3.5 w-3.5" /> Copy
                       </Button>
+                      <Button size="sm" asChild variant="outline" className="border-emerald-600/40 text-emerald-700 dark:text-emerald-400">
+                        <a
+                          href={whatsappLink(
+                            leads.find((l) => l.email.toLowerCase() === (lic.assigned_email ?? "").toLowerCase())?.phone.replace(/[^0-9]/g, "") ||
+                              WHATSAPP_PK,
+                            `Assalam o Alaikum! Aapki HCM Lite license key: ${lic.license_key} (${PLAN_LABELS[lic.plan_type]}). Isay https://hcmlitebymuneeb.lovable.app/setup par activate karein — 1 device lock applied.`,
+                          )}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                        </a>
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
