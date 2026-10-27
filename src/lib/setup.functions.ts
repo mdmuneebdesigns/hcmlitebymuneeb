@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { OWNER_EMAIL } from "@/lib/license";
 
 // ---------- Types (client-safe) ----------
 export interface FirstRunStatus {
@@ -161,6 +162,11 @@ export const completeFirstRunSetup = createServerFn({ method: "POST" })
     const email = userData.user?.email ?? "";
     if (userError || !EMAIL_RE.test(email)) {
       return { ok: false, error: "Your account has no valid email — please sign in again" };
+    }
+
+    // The owner master key may only be used by the platform owner's own account.
+    if (licenseKey === MASTER_SETUP_KEY && email.toLowerCase() !== OWNER_EMAIL) {
+      return { ok: false, error: "This master key is reserved for the platform owner" };
     }
 
     // 1. Ensure the admin role on the signed-in account (idempotent).
