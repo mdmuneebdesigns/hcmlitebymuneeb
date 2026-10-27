@@ -29,6 +29,13 @@
       "when": 1793128840785,
       "tag": "0003_create_workspace_licenses",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793134282994,
+      "tag": "0004_tighten_public_insert_policies",
+      "breakpoints": true
     }
   ]
 }
