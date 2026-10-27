@@ -24,7 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { EnterpriseDemoSection, HcmFaqSection } from "@/components/landing-extras";
+import { EnterpriseDemoSection, HcmFaqSection, OwnerContactBadges, FloatingWhatsApp } from "@/components/landing-extras";
+import { DemoMode, startDemoMode } from "@/components/demo-mode";
 import { supabase } from "@/integrations/supabase/client";
 
 const NAV_LINKS = [
@@ -32,10 +33,121 @@ const NAV_LINKS = [
   { label: "AI Engine", href: "#ai-engine" },
   { label: "Biometric Attendance", href: "#attendance" },
   { label: "Payroll", href: "#payroll" },
+  { label: "Pricing", href: "#pricing" },
   { label: "Architecture Blueprint", href: "#architecture" },
   { label: "FAQ", href: "#faq" },
   { label: "Enterprise Demo", href: "#enterprise" },
 ];
+
+/** Pricing cards — launch pricing with the crossed-out ("cutting") anchor price. */
+function PricingSection({ onStartDemo }: { onStartDemo: () => void }) {
+  const plans = [
+    {
+      name: "Interactive Demo Trial",
+      price: "Free",
+      note: "5 Actions Per Module",
+      cut: null as string | null,
+      features: [
+        "Try all 9 modules hands-on",
+        "5 employees · 5 check-ins · 5 leaves",
+        "5 PDF payslip receipts · 5 AI queries",
+        "No credit card, no signup data",
+      ],
+      cta: (
+        <Button size="lg" variant="outline" className="w-full" onClick={onStartDemo}>
+          <Zap className="h-4 w-4" /> ⚡ Start Interactive Demo
+        </Button>
+      ),
+    },
+    {
+      name: "Monthly Cloud Subscription",
+      price: "$49",
+      unit: "/month",
+      note: "30-Day License · Strictly 1 Device Lock",
+      cut: "$100",
+      features: [
+        "Unlimited employees & attendance",
+        "Automated payroll + unlimited PDF payslips",
+        "Role-scoped AI assistant (Roman Urdu)",
+        "Cloud hosting, backups & updates included",
+      ],
+      highlight: true,
+      cta: (
+        <a href="#enterprise" className="w-full">
+          <Button size="lg" className="gradient-brand w-full text-white">
+            💼 Subscribe / Book Demo
+          </Button>
+        </a>
+      ),
+    },
+    {
+      name: "Lifetime Enterprise / One-Time License",
+      price: "$499",
+      unit: " one-time",
+      note: "Lifetime Validity + Source / Custom Setup",
+      cut: "$999",
+      features: [
+        "One-time payment, lifetime validity",
+        "Full source code & white-label option",
+        "Custom deployment (on-premise or cloud)",
+        "Priority WhatsApp + US-desk support",
+      ],
+      cta: (
+        <a href="#enterprise" className="w-full">
+          <Button size="lg" variant="outline" className="w-full">
+            🔑 Acquire Lifetime License
+          </Button>
+        </a>
+      ),
+    },
+  ];
+
+  return (
+    <section id="pricing" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16">
+      <h2 className="text-center text-3xl font-bold tracking-tight">Simple, transparent pricing</h2>
+      <p className="mx-auto mt-3 max-w-xl text-center text-sm text-muted-foreground">
+        Start free with the interactive demo — then choose a 30-day cloud subscription or a one-time lifetime license.
+        Launch pricing, limited time.
+      </p>
+      <div className="mt-10 grid gap-6 lg:grid-cols-3">
+        {plans.map((p) => (
+          <div
+            key={p.name}
+            className={`relative flex flex-col rounded-2xl border bg-card p-6 shadow-sm transition-shadow hover:shadow-lg ${
+              p.highlight ? "border-primary/60 shadow-lg ring-1 ring-primary/30" : "border-border/60"
+            }`}
+          >
+            {p.highlight && (
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full gradient-brand px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
+                Most Popular
+              </span>
+            )}
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{p.name}</h3>
+            <div className="mt-3 flex items-baseline gap-2">
+              {p.cut && (
+                <span className="text-lg font-medium text-muted-foreground/70 line-through">{p.cut}</span>
+              )}
+              <span className={`text-4xl font-bold tracking-tight ${p.cut ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}>
+                {p.price}
+              </span>
+              {p.unit && <span className="text-sm text-muted-foreground">{p.unit}</span>}
+            </div>
+            <p className="mt-1 text-xs font-medium text-primary">{p.note}</p>
+            <ul className="mt-4 flex-1 space-y-2 text-sm text-muted-foreground">
+              {p.features.map((f) => (
+                <li key={f} className="flex items-start gap-2">
+                  <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" /> {f}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-5">{p.cta}</div>
+          </div>
+        ))}
+      </div>
+      <OwnerContactBadges className="mt-8" />
+    </section>
+  );
+}
 
 /** Types the Roman-Urdu leave request, then reveals the auto-filled JSON form. */
 function AiTypingPreview() {
