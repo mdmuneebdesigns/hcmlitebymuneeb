@@ -32,7 +32,7 @@ const NAV_LINKS = [
   { label: "Features", href: "#features" },
   { label: "AI Engine", href: "#ai-engine" },
   { label: "Pricing", href: "#pricing" },
-  { label: "Architecture Blueprint", href: "#architecture" },
+  { label: "Blueprint", href: "#architecture" },
   { label: "FAQ", href: "#faq" },
   { label: "Enterprise Demo", href: "#enterprise" },
 ];
@@ -228,15 +228,15 @@ export function LandingPage() {
           <a href="#top" className="flex items-center">
             <BrandLogo size={34} showWordmark />
           </a>
-          <nav className="hidden items-center gap-6 text-sm text-muted-foreground lg:flex">
+          <nav className="hidden items-center gap-4 text-sm text-muted-foreground lg:flex xl:gap-5">
             {NAV_LINKS.map((l) => (
-              <a key={l.href} href={l.href} className="transition-colors hover:text-foreground">
+              <a key={l.href} href={l.href} className="whitespace-nowrap transition-colors hover:text-foreground">
                 {l.label}
               </a>
             ))}
           </nav>
-          <div className="flex items-center gap-2">
-            <a href="#enterprise" className="hidden lg:block">
+          <div className="flex shrink-0 items-center gap-2">
+            <a href="#enterprise" className="hidden xl:block whitespace-nowrap">
               <Button variant="outline" size="sm">
                 💼 Book Enterprise Demo
               </Button>
