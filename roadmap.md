@@ -39,5 +39,9 @@ Plan approved: `.lovable/plan/hcm-lite-master-architectural-implementation-plan-
 - [x] README + .env.example — done; test credentials handed off in chat (Admin / HR / Employee)
 - [x] Dark mode toggle — verified: sun/moon button on every page (incl. /setup, /auth), persists across reloads, no first-paint flash, OS preference fallback (src/components/theme-toggle.tsx)
 
+## Project Blueprint report (2026-10-27)
+- [x] `/project-blueprint` page — full A-to-Z technical report (Roman Urdu) rendered in-app + "Project Blueprint PDF" link on dashboard header
+- [x] One-click PDF download — server-side pdf-lib generation (`src/lib/blueprint.functions.ts`, content in `src/lib/blueprint-report.ts`), 7-page A4 report; verified via Playwright download + per-page visual QA
+
 ## Demo state (as of 2026-10-26)
 Database is intentionally EMPTY (fresh /setup state for judging — zero dummy data). Test flow verified end-to-end on 2026-10-26: /setup wizard → Admin auto sign-in → payroll draft run → payslip PDF download (October_2026_payslip.pdf, math + layout QA'd). Test data was wiped after verification. Create real accounts via /setup; Judge Reset (Admin dashboard) wipes everything back to /setup.
