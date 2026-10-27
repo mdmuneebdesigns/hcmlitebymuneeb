@@ -31,8 +31,6 @@ import { supabase } from "@/integrations/supabase/client";
 const NAV_LINKS = [
   { label: "Features", href: "#features" },
   { label: "AI Engine", href: "#ai-engine" },
-  { label: "Biometric Attendance", href: "#attendance" },
-  { label: "Payroll", href: "#payroll" },
   { label: "Pricing", href: "#pricing" },
   { label: "Architecture Blueprint", href: "#architecture" },
   { label: "FAQ", href: "#faq" },
@@ -495,7 +493,7 @@ export function LandingPage() {
           <OwnerContactBadges />
         </div>
       </footer>
-      <FloatingWhatsApp />
+      <FloatingBuyWhatsApp />
       <DemoMode />
     </div>
   );
