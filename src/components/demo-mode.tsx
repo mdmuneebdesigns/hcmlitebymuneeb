@@ -319,7 +319,7 @@ function EmployeesPanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn
       toast.error("Employee name likhein");
       return;
     }
-    consume("employees", (s) => ({
+    if (!consume("employees", (s) => ({
       ...s,
       employees: [
         ...s.employees,
@@ -331,7 +331,7 @@ function EmployeesPanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn
           salary: Math.max(0, Number(salary) || 0),
         },
       ],
-    }));
+    }))) return;
     setName("");
     toast.success(`${fullName} added — demo directory mein show ho gaya.`);
   }
@@ -401,13 +401,13 @@ function AttendancePanel({ demo, consume }: { demo: DemoState; consume: ConsumeF
       return;
     }
     const late = kind === "check-in" && demo.employees.indexOf(employee) % 3 === 2;
-    consume("checkins", (s) => ({
+    if (!consume("checkins", (s) => ({
       ...s,
       attendance: [
         ...s.attendance,
         { id: uid(), employeeName: employee.name, kind, at: new Date().toISOString(), distanceM: 12 + Math.floor(Math.random() * 20), late },
       ],
-    }));
+    }))) return;
     toast.success(
       kind === "check-in"
         ? `✅ Check-in recorded — face verified, GPS ${late ? "inside geofence (late mark)" : "inside geofence"}.`
