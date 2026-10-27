@@ -359,6 +359,10 @@ export function LandingPage() {
         </div>
       </section>
 
+      <HcmFaqSection />
+      <EnterpriseDemoSection />
+      </main>
+
       {/* Footer */}
       <footer className="border-t border-border/60 px-4 py-10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
