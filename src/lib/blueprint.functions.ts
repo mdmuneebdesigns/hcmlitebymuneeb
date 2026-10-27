@@ -93,14 +93,16 @@ async function buildBlueprintPdf(): Promise<Uint8Array> {
   // ---------- Cover ----------
   page.drawRectangle({ x: 0, y: H - 210, width: W, height: 210, color: accent });
   const titleLines = wrap(REPORT_TITLE, bold, 22, CW);
-  let ty = H - 90 - titleLines.length * 28;
+  // PDF y grows upward: draw the first line highest, then step DOWN.
+  let ty = H - 90;
   for (const line of titleLines) {
     page.drawText(line, { x: M, y: ty, size: 22, font: bold, color: rgb(1, 1, 1) });
-    ty += 28;
+    ty -= 28;
   }
+  ty -= 6;
   for (const line of wrap(REPORT_SUBTITLE, font, 11, CW)) {
     page.drawText(line, { x: M, y: ty, size: 11, font, color: rgb(0.9, 0.93, 1) });
-    ty += 16;
+    ty -= 16;
   }
   y = H - 260;
   const now = new Intl.DateTimeFormat("en-GB", {
