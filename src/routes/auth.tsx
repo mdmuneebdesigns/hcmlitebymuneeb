@@ -14,6 +14,9 @@ import { BrandLogo } from "@/components/brand-logo";
 import { pageMeta } from "@/lib/seo";
 import { FloatingWhatsApp } from "@/components/landing-extras";
 import { DemoMode, startDemoMode } from "@/components/demo-mode";
+import { LicenseLockScreen } from "@/components/license-lock";
+import { checkDeviceLock, type DeviceLockResult } from "@/lib/license.functions";
+import { getDeviceFingerprint } from "@/lib/device";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
@@ -55,6 +58,20 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  // Security lock screen state (1-device license lock / expiry / revocation).
+  const [lock, setLock] = useState<DeviceLockResult | null>(null);
+
+  /** Post-sign-in license device check; signs the session out when locked. */
+  async function verifyDeviceLock(): Promise<boolean> {
+    const fp = await getDeviceFingerprint();
+    const result = await checkDeviceLock({ data: { deviceHash: fp.hash, deviceInfo: fp.info } }).catch(() => null);
+    if (result?.locked) {
+      await supabase.auth.signOut();
+      setLock(result);
+      return false;
+    }
+    return true;
+  }
 
   useEffect(() => {
     getFirstRunStatus()
