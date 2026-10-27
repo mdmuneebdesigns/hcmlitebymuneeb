@@ -163,6 +163,11 @@ export const completeFirstRunSetup = createServerFn({ method: "POST" })
       return { ok: false, error: "Your account has no valid email — please sign in again" };
     }
 
+    // The owner master key may only be used by the platform owner's own account.
+    if (licenseKey === MASTER_SETUP_KEY && email.toLowerCase() !== OWNER_EMAIL) {
+      return { ok: false, error: "This master key is reserved for the platform owner" };
+    }
+
     // 1. Ensure the admin role on the signed-in account (idempotent).
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
