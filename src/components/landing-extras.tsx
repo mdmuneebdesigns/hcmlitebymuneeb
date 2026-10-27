@@ -66,6 +66,9 @@ export function EnterpriseDemoSection() {
       return;
     }
     setStatus("sending");
+    // Give up after 20s so the UI never hangs on a slow or blocked network.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20_000);
     try {
       const res = await fetch(FORMSUBMIT_ENDPOINT, {
         method: "POST",
@@ -77,11 +80,14 @@ export function EnterpriseDemoSection() {
           _captcha: "false",
           _honey: honey,
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
       if (!res.ok) throw new Error(`FormSubmit responded ${res.status}`);
       setStatus("sent");
       toast.success("✅ Inquiry received — sent to Muhammad Muneeb.");
     } catch {
+      clearTimeout(timer);
       setStatus("error");
       toast.error("Send failed — please email " + OWNER_EMAIL + " directly.");
     }
