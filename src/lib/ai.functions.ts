@@ -344,6 +344,10 @@ export const policyAnswer = createServerFn({ method: "POST" })
         : "The AI service is unavailable right now. Please try again shortly.";
       console.error("[policyAnswer]", e);
     }
+    await logAi(context, "policy_qa", data.question.slice(0, 500), answer, success, Date.now() - started, null);
+    return { answer, aiGenerated: true };
+  });
+
 // ---------- Public website assistant (landing page visitors, no login) ----------
 
 const SITE_KNOWLEDGE = `
