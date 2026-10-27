@@ -24,6 +24,14 @@ export const LEAD_TEAM_SIZES = [
 
 export const LEAD_PLANS = ["Interactive Demo Trial", "Monthly Cloud Subscription", "Lifetime Enterprise License"] as const;
 
+/** Owner contact channels — used across the landing page, demo mode and modals. */
+export const OWNER_EMAIL = "mdmuneebdesigns@gmail.com";
+export const CONTACT_WHATSAPP_URL =
+  "https://wa.me/923140263346?text=Hi%20Muneeb,%20I%20tested%20HCM%20Lite%20and%20want%20to%20buy%20a%20license!";
+export const CONTACT_WHATSAPP_DISPLAY = "+92-3140263346";
+export const CONTACT_US_DESK_DISPLAY = "+1 (775) 312-8079";
+export const CONTACT_US_DESK_TEL = "tel:+17753128079";
+
 export interface LeadInput {
   fullName: string;
   email: string;
