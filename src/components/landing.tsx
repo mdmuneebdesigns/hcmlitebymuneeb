@@ -280,13 +280,12 @@ export function LandingPage() {
             <Button size="lg" className="gradient-brand text-white shadow-lg" onClick={launchSetup}>
               Launch Company Setup
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate({ to: "/auth" })}>
+            <Button size="lg" variant="outline" onClick={startDemoMode}>
               <Zap className="h-4 w-4" /> ⚡ Explore Live Interactive Demo
             </Button>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            Visitors sign up or sign in first — then the guided setup configures your company, office hours and GPS
-            geofence.
+            Demo mode mein 9 modules ke 5-5 actions free — phir apna workspace launch karein.
           </p>
         </div>
       </section>
@@ -472,6 +471,7 @@ export function LandingPage() {
       </section>
 
       <HcmFaqSection />
+      <PricingSection onStartDemo={startDemoMode} />
       <EnterpriseDemoSection />
       </main>
 
@@ -491,7 +491,12 @@ export function LandingPage() {
             </Button>
           </div>
         </div>
+        <div className="mx-auto mt-6 max-w-6xl border-t border-border/40 pt-6">
+          <OwnerContactBadges />
+        </div>
       </footer>
+      <FloatingWhatsApp />
+      <DemoMode />
     </div>
   );
 }
