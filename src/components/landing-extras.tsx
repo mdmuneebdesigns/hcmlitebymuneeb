@@ -19,6 +19,24 @@ import {
 } from "@/lib/leads";
 import { FAQ_ITEMS } from "@/lib/seo";
 
+/** Floating circular WhatsApp CTA for public pages (bottom-right). */
+export function FloatingWhatsApp() {
+  return (
+    <a
+      href={CONTACT_WHATSAPP_URL}
+      target="_blank"
+      rel="noreferrer"
+      aria-label="Chat on WhatsApp"
+      className="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg transition-transform hover:scale-105"
+    >
+      <MessageCircle className="h-5 w-5" />
+      <span className="absolute -right-1 -top-1 rounded-full bg-foreground px-1.5 py-0.5 text-[8px] font-bold text-background">
+        Buy
+      </span>
+    </a>
+  );
+}
+
 /** Inline + floating owner-contact badges (WhatsApp PK desk, US desk, email). */
 export function OwnerContactBadges({ className }: { className?: string }) {
   return (
