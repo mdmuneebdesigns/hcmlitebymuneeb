@@ -14,9 +14,10 @@ import { BrandLogo } from "@/components/brand-logo";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
-    redirect: typeof search["redirect"] === "string" ? search["redirect"] : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
+    const redirect = typeof search["redirect"] === "string" ? search["redirect"] : undefined;
+    return redirect ? { redirect } : {};
+  },
   head: () => ({
     meta: [
       { title: "Sign in — HCM Lite" },
