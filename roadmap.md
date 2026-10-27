@@ -62,3 +62,9 @@ Database is intentionally EMPTY (fresh /setup state for judging — zero dummy d
 - [x] robots.txt: all search + AI crawlers (GPTBot, OAI-SearchBot, ChatGPT-User, PerplexityBot, Google-Extended, ClaudeBot) allowed + Sitemap directive — verified 200
 - [x] `public/llms.txt` + `public/llms-full.txt` (llmstxt.org spec) — verified 200
 - [x] Enterprise Demo section (`#enterprise`, `src/components/landing-extras.tsx`): 7 fields, honeypot, FormSubmit AJAX → mdmuneebdesigns@gmail.com, 20s timeout, emerald success state, toast, navbar + footer links, HTML form-POST fallback button on error. Endpoint verified reachable (HTTP 200, CORS open); delivery needs one-time FormSubmit activation email click by owner
+
+## Monetization Phase 1 (2026-10-27; complete)
+- [x] `enterprise_leads` table (anon INSERT-only) + `demo_events` analytics table; public server fn `submitEnterpriseLead` stores lead first, then forwards to FormSubmit server-side (iframe/CORS-proof); emerald success modal "✅ Request Received!" after storage
+- [x] Booking form root-cause fix: no more "Send failed — please email directly" as primary failure; contact badges (WhatsApp PK Desk +92-3140263346, US Desk +1 (775) 312-8079, mdmuneebdesigns@gmail.com) in booking section, footer, quota modal; floating WhatsApp CTA on public pages
+- [x] Interactive Demo Mode: 5-action quotas per module, sticky quota bar, upgrade + End Demo buttons, quota-reached upsell modal (WhatsApp / US Desk / Activate License Key → lead pipeline), demo PDF payslip receipts (pdf-lib client-side), never auto-closes; entry points on landing hero + auth page
+- [x] Pricing section (#pricing + nav link): Free demo trial · $49/mo (shown with $100 cut) · $499 one-time (shown with $999 cut); Offer schema added to JSON-LD
