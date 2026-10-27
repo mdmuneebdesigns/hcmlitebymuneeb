@@ -19,6 +19,11 @@ interface SetupInput {
   officeLng: number;
   geofenceRadiusM: number;
   adminFullName: string;
+  // License activation (1-device lock). Validated server-side before any
+  // company row is created; the master key MUNEEB-VIP is owner-reserved.
+  licenseKey: string;
+  deviceHash: string | null;
+  deviceInfo: string | null;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -111,11 +116,44 @@ export const completeFirstRunSetup = createServerFn({ method: "POST" })
   .handler(async ({ context, data }): Promise<SetupResult> => {
     const { supabase, userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { MASTER_SETUP_KEY, computeEffectiveStatus } = await import("@/lib/license");
 
     // Guard: the wizard can only run on a fresh install.
     const { count } = await supabaseAdmin.from("companies").select("id", { count: "exact", head: true });
     if ((count ?? 0) > 0) {
       return { ok: false, error: "Setup already completed. Please sign in instead." };
+    }
+
+    // License gate: nobody creates a real company without a valid key.
+    const licenseKey = (data.licenseKey ?? "").trim().toUpperCase();
+    if (!licenseKey) return { ok: false, error: "A valid license key is required to set up your company" };
+    if (licenseKey !== MASTER_SETUP_KEY) {
+      const { data: license } = await supabaseAdmin
+        .from("workspace_licenses")
+        .select("*")
+        .eq("license_key", licenseKey)
+        .maybeSingle();
+      if (!license) return { ok: false, error: "This license key does not exist" };
+      const lic = license as {
+        id: string;
+        status: string;
+        expires_at: string | null;
+        plan_type: string;
+        bound_device_hash: string | null;
+        bound_device_info: string | null;
+      };
+      if (lic.status === "revoked") return { ok: false, error: "This license key has been revoked by the platform owner" };
+      const effective = computeEffectiveStatus(lic.status as "unclaimed", lic.expires_at);
+      if (effective === "expired") {
+        await supabaseAdmin.from("workspace_licenses").update({ status: "expired" }).eq("id", lic.id);
+        return { ok: false, error: "This license has expired — contact the platform owner to extend it" };
+      }
+      if (lic.bound_device_hash && data.deviceHash && lic.bound_device_hash !== data.deviceHash) {
+        return {
+          ok: false,
+          error: `This license is already bound to another device (${lic.bound_device_info ?? "unknown"}). Sharing licenses across devices is prohibited.`,
+        };
+      }
     }
 
     // Resolve the caller's email from their session (never from input).
