@@ -82,12 +82,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "HCM Lite" },
+      { title: "HCM Lite — AI-Powered HR, Biometric Attendance & Payroll" },
       {
         name: "description",
         content: "HCM Lite — AI-assisted Human Capital Management for Admin, HR and Employees.",
       },
-      { property: "og:title", content: "HCM Lite" },
+      { property: "og:title", content: "HCM Lite — AI-Powered HR, Biometric Attendance & Payroll" },
       {
         property: "og:description",
         content: "HCM Lite — AI-assisted Human Capital Management for Admin, HR and Employees.",
@@ -100,7 +100,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
     ],
   }),
   shellComponent: RootShell,

@@ -43,5 +43,13 @@ Plan approved: `.lovable/plan/hcm-lite-master-architectural-implementation-plan-
 - [x] `/project-blueprint` page — full A-to-Z technical report (Roman Urdu) rendered in-app + "Project Blueprint PDF" link on dashboard header
 - [x] One-click PDF download — server-side pdf-lib generation (`src/lib/blueprint.functions.ts`, content in `src/lib/blueprint-report.ts`), 7-page A4 report; verified via Playwright download + per-page visual QA
 
+## SaaS Landing, Brand & Security Hardening (2026-10-27; complete; verified E2E)
+- [x] Brand identity: `<BrandLogo />` SVG component (indigo→violet→emerald gradient squircle "H" + biometric frame + AI spark) + `public/favicon.svg` (favicon.ico removed); used on landing navbar, /auth, /setup, dashboard header and inside Payslip/Blueprint PDFs
+- [x] SaaS landing page at `/` and `/welcome` (`src/components/landing.tsx`): sticky glass navbar, animated hero, 4-card bento grid (radar geofence, Roman-Urdu AI typing preview, payroll table, RBAC/audit/RLS), 3-step how-it-works, architecture section; signed-in visitors on `/` redirect to /dashboard
+- [x] Enterprise theme (indigo/violet/emerald) in `src/styles.css`: new light+dark oklch tokens, `success`/`warning` tokens, `gradient-brand`/`text-gradient-brand`/`glass` utilities; dark mode re-verified visually
+- [x] Secured /setup: login required (beforeLoad → /auth?redirect=/setup); fresh-install Sign-Up tab on /auth (PasswordStrengthChecklist) → `provisionFirstAdmin` server fn (fresh-install guarded, creates confirmed admin + role) → auto sign-in → /setup; after setup the tab disappears; "Workspace Active" banner on /setup when company exists (Go to Dashboard / Update Company Setup)
+- [x] Wipe guard: dashboard RESET modal requires typing `RESET` exactly (wrong text keeps button disabled); `wipeAllData` stays Admin-only server-side
+- [x] RLS re-verified: all 16 public tables RLS-enabled with policies; TS zero errors, 64/64 tests, build OK; E2E verified landing → signup → setup → dashboard → RESET wipe → fresh signup state, zero console errors; test data wiped
+
 ## Demo state (as of 2026-10-26)
 Database is intentionally EMPTY (fresh /setup state for judging — zero dummy data). Test flow verified end-to-end on 2026-10-26: /setup wizard → Admin auto sign-in → payroll draft run → payslip PDF download (October_2026_payslip.pdf, math + layout QA'd). Test data was wiped after verification. Create real accounts via /setup; Judge Reset (Admin dashboard) wipes everything back to /setup.

@@ -1,24 +1,32 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { Building2, Check, Loader2, MapPin } from "lucide-react";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { ArrowRight, Check, Loader2, MapPin, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { completeFirstRunSetup } from "@/lib/setup.functions";
+import { completeFirstRunSetup, getFirstRunStatus } from "@/lib/setup.functions";
+import { getMe, type Me } from "@/lib/auth.functions";
 import { getRealUserLocation } from "@/lib/geo";
-import { PasswordStrengthChecklist, isPasswordStrong } from "@/components/password-checklist";
+import { BrandLogo } from "@/components/brand-logo";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/setup")({
+  ssr: false,
+  // Setup is a secure, authenticated surface — visitors must sign in/up first.
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      throw redirect({ to: "/auth", search: { redirect: "/setup" }, replace: true });
+    }
+  },
   head: () => ({
     meta: [
-      { title: "First-run setup — HCM Lite" },
-      { name: "description", content: "Create your company profile and the Admin account for HCM Lite." },
-      { property: "og:title", content: "First-run setup — HCM Lite" },
-      { property: "og:description", content: "Create your company profile and the Admin account for HCM Lite." },
+      { title: "Company setup — HCM Lite" },
+      { name: "description", content: "Configure your company profile, office hours and GPS geofence in HCM Lite." },
+      { property: "og:title", content: "Company setup — HCM Lite" },
+      { property: "og:description", content: "Configure your company profile, office hours and GPS geofence in HCM Lite." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -35,6 +43,8 @@ const DEFAULT_LNG = "67.0011";
 function SetupPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [me, setMe] = useState<Me | null>(null);
+  const [companyExists, setCompanyExists] = useState<boolean | null>(null);
 
   // Company
   const [companyName, setCompanyName] = useState("");
@@ -46,12 +56,20 @@ function SetupPage() {
   const [officeLng, setOfficeLng] = useState(DEFAULT_LNG);
   const [radius, setRadius] = useState(150);
 
-  // Admin
+  // Admin — comes from the signed-in account (no password needed here).
   const [adminFullName, setAdminFullName] = useState("");
-  const [adminEmail, setAdminEmail] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getFirstRunStatus().then((s) => setCompanyExists(s.companyExists)).catch(() => setCompanyExists(false));
+    getMe()
+      .then((m) => {
+        setMe(m);
+        setAdminFullName(m.fullName ?? "");
+      })
+      .catch(() => undefined);
+  }, []);
 
   function toggleDay(day: string) {
     setWeekendDays((prev) => (prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]));
@@ -96,24 +114,8 @@ function SetupPage() {
     return true;
   }
 
-  function validateStep2(): boolean {
-    if (adminFullName.trim().length < 2) {
-      toast.error("Enter the Admin name");
-      return false;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)) {
-      toast.error("Enter a valid Admin email");
-      return false;
-    }
-    if (!isPasswordStrong(adminPassword)) {
-      toast.error("Admin password must meet all 5 requirements below");
-      return false;
-    }
-    return true;
-  }
-
   async function handleSubmit() {
-    if (!validateStep2()) return;
+    if (!validateStep1()) return;
     setLoading(true);
     try {
       const result = await completeFirstRunSetup({
@@ -127,8 +129,6 @@ function SetupPage() {
           officeLng: Number(officeLng),
           geofenceRadiusM: radius,
           adminFullName: adminFullName.trim(),
-          adminEmail: adminEmail.trim(),
-          adminPassword,
         },
       });
       if (!result.ok) {
@@ -136,34 +136,65 @@ function SetupPage() {
         setLoading(false);
         return;
       }
-      // Auto sign-in: the Admin account is created and email-confirmed
-      // server-side, so the credentials just typed can sign straight in.
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: adminEmail.trim(),
-        password: adminPassword,
-      });
-      if (signInError) {
-        toast.success("Company created! Please sign in with the Admin account.");
-        navigate({ to: "/auth", replace: true });
-        return;
-      }
-      toast.success("Company created — you are signed in as Admin");
-      navigate({ to: "/", replace: true });
+      toast.success("Company created — welcome to your new workspace");
+      navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Setup failed");
       setLoading(false);
     }
   }
 
+  // Workspace already active — never let a second setup overwrite data.
+  if (companyExists) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-lg">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-2 flex items-center justify-center">
+              <BrandLogo size={48} />
+            </div>
+            <CardTitle className="flex items-center justify-center gap-2 text-xl font-bold">
+              <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Workspace Active
+            </CardTitle>
+            <CardDescription>
+              A company is already set up in this workspace. Anonymous or duplicate setup is disabled — sign in with
+              your Admin or HR account to continue.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2 sm:flex-row">
+            <Button className="flex-1" onClick={() => navigate({ to: "/dashboard", replace: true })}>
+              Go to Dashboard <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" className="flex-1" asChild>
+              <Link to="/org">Update Company Setup</Link>
+            </Button>
+            <Button
+              variant="ghost"
+              className="flex-1"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.replace("/auth");
+              }}
+            >
+              Sign out
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background px-4 py-10">
       <div className="mx-auto max-w-xl space-y-6">
         <div className="text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Building2 className="h-6 w-6" />
+          <div className="mx-auto mb-3 flex items-center justify-center">
+            <BrandLogo size={48} />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome to HCM Lite</h1>
-          <p className="mt-1 text-sm text-muted-foreground">First-run setup — create your company and Admin account</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Set up your company</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Signed in as {me?.email ?? "…"} — this account becomes the workspace Admin
+          </p>
         </div>
 
         <div className="flex items-center justify-center gap-2 text-sm">
@@ -171,7 +202,7 @@ function SetupPage() {
             <Check className="h-4 w-4" /> 1. Company
           </span>
           <span className="text-muted-foreground">→</span>
-          <span className={step >= 2 ? "font-medium text-primary" : "text-muted-foreground"}>2. Admin account</span>
+          <span className={step >= 2 ? "font-medium text-primary" : "text-muted-foreground"}>2. Confirm Admin</span>
         </div>
 
         {step === 1 && (
@@ -256,7 +287,7 @@ function SetupPage() {
               </div>
               <Button
                 type="button"
-                className="w-full"
+                className="w-full gradient-brand text-white"
                 onClick={() => {
                   if (validateStep1()) setStep(2);
                 }}
@@ -270,28 +301,31 @@ function SetupPage() {
         {step === 2 && (
           <Card>
             <CardHeader>
-              <CardTitle>Admin account</CardTitle>
-              <CardDescription>The primary Admin — can manage HR logins, settings and payroll finalization</CardDescription>
+              <CardTitle>Confirm Admin account</CardTitle>
+              <CardDescription>
+                Your signed-in account becomes the primary Admin — it manages HR logins, settings and payroll
+                finalization. No password is needed here; you are already authenticated.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="adminEmail">Admin email (from your account)</Label>
+                <Input id="adminEmail" type="email" value={me?.email ?? ""} readOnly />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="adminName">Full name</Label>
                 <Input id="adminName" value={adminFullName} onChange={(e) => setAdminFullName(e.target.value)} placeholder="Ayesha Khan" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="adminEmail">Email</Label>
-                <Input id="adminEmail" type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder="admin@company.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="adminPassword">Password</Label>
-                <Input id="adminPassword" type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="••••••••" />
-                <PasswordStrengthChecklist password={adminPassword} />
               </div>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(1)} disabled={loading}>
                   Back
                 </Button>
-                <Button type="button" className="flex-1" onClick={handleSubmit} disabled={loading || !isPasswordStrong(adminPassword)}>
+                <Button
+                  type="button"
+                  className="flex-1 gradient-brand text-white"
+                  onClick={handleSubmit}
+                  disabled={loading || adminFullName.trim().length < 2}
+                >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   Create company
                 </Button>

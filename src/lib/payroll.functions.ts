@@ -474,8 +474,12 @@ async function buildPayslipPdf(info: {
 
   const fmt = (n: number) => `PKR ${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 
-  page.drawText(info.companyName, { x: 50, y: 790, size: 20, font: bold, color: dark });
-  page.drawText("Payslip", { x: 50, y: 768, size: 14, font: bold, color: muted });
+  // Brand mark: indigo squircle with a white "H" (vector, drawn with pdf-lib).
+  const brandIndigo = rgb(0.31, 0.27, 0.9);
+  page.drawRectangle({ x: 50, y: 772, width: 40, height: 40, color: brandIndigo });
+  page.drawText("H", { x: 63, y: 783, size: 18, font: bold, color: rgb(1, 1, 1) });
+  page.drawText(info.companyName, { x: 102, y: 790, size: 20, font: bold, color: dark });
+  page.drawText("Payslip", { x: 102, y: 768, size: 14, font: bold, color: muted });
   page.drawText(info.period, { x: 430, y: 790, size: 12, font: font, color: dark });
   if (info.status !== "finalized") {
     page.drawText("DRAFT — not finalized", { x: 400, y: 772, size: 10, font: bold, color: rgb(0.75, 0.3, 0.1) });
