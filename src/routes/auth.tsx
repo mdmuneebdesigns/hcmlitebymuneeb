@@ -272,6 +272,15 @@ function AuthPage() {
           )}
         </CardContent>
       </Card>
+      <Button
+        variant="outline"
+        size="lg"
+        className="mt-6"
+        onClick={startDemoMode}
+      >
+        <Zap className="h-4 w-4" /> ⚡ Explore Live Interactive Demo
+      </Button>
+      <DemoMode />
     </div>
   );
 }
