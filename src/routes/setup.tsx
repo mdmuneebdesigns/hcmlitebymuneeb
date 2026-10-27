@@ -1,12 +1,15 @@
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, Check, Loader2, MapPin, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, KeyRound, Loader2, MapPin, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { completeFirstRunSetup, getFirstRunStatus } from "@/lib/setup.functions";
+import { validateLicenseKey } from "@/lib/license.functions";
+import { MASTER_SETUP_KEY, PLAN_LABELS, type LicensePlan } from "@/lib/license";
+import { getDeviceFingerprint, type DeviceIdentity } from "@/lib/device";
 import { getMe, type Me } from "@/lib/auth.functions";
 import { getRealUserLocation } from "@/lib/geo";
 import { BrandLogo } from "@/components/brand-logo";
@@ -59,7 +62,18 @@ function SetupPage() {
   // Admin — comes from the signed-in account (no password needed here).
   const [adminFullName, setAdminFullName] = useState("");
 
+  // License activation (1-device lock).
+  const [licenseKey, setLicenseKey] = useState("");
+  const [licensePlan, setLicensePlan] = useState<LicensePlan | "master" | null>(null);
+  const [licenseError, setLicenseError] = useState<string | null>(null);
+  const [validating, setValidating] = useState(false);
+  const [device, setDevice] = useState<DeviceIdentity | null>(null);
+
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getDeviceFingerprint().then(setDevice).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     getFirstRunStatus().then((s) => setCompanyExists(s.companyExists)).catch(() => setCompanyExists(false));
