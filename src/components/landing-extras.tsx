@@ -1,50 +1,85 @@
 import { useRef, useState } from "react";
-import { Building2, CheckCircle2, Loader2, Mail, Send } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Building2, CheckCircle2, Loader2, Mail, MessageCircle, Phone, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { submitEnterpriseLead } from "@/lib/leads.functions";
+import {
+  CONTACT_WHATSAPP_DISPLAY,
+  CONTACT_WHATSAPP_URL,
+  CONTACT_US_DESK_DISPLAY,
+  CONTACT_US_DESK_TEL,
+  LEAD_INQUIRY_TYPES,
+  LEAD_TEAM_SIZES,
+  OWNER_EMAIL,
+} from "@/lib/leads";
 import { FAQ_ITEMS } from "@/lib/seo";
 
-const FORMSUBMIT_ENDPOINT = "https://formsubmit.co/ajax/mdmuneebdesigns@gmail.com";
-const OWNER_EMAIL = "mdmuneebdesigns@gmail.com";
+/** Floating circular WhatsApp CTA for public pages (bottom-right). */
+export function FloatingWhatsApp() {
+  return (
+    <a
+      href={CONTACT_WHATSAPP_URL}
+      target="_blank"
+      rel="noreferrer"
+      aria-label="Chat on WhatsApp"
+      className="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg transition-transform hover:scale-105"
+    >
+      <MessageCircle className="h-5 w-5" />
+      <span className="absolute -right-1 -top-1 rounded-full bg-foreground px-1.5 py-0.5 text-[8px] font-bold text-background">
+        Buy
+      </span>
+    </a>
+  );
+}
 
-const TEAM_SIZES = [
-  "1–25 Employees",
-  "26–100 Employees",
-  "101–500 Employees",
-  "500+ Enterprise",
-  "Custom White-Label / Source Code License",
-];
+/** Inline + floating owner-contact badges (WhatsApp PK desk, US desk, email). */
+export function OwnerContactBadges({ className }: { className?: string }) {
+  return (
+    <div className={`flex flex-wrap items-center justify-center gap-2 ${className ?? ""}`}>
+      <a href={CONTACT_WHATSAPP_URL} target="_blank" rel="noreferrer">
+        <Button size="sm" className="bg-emerald-600 text-white hover:bg-emerald-600/90">
+          <MessageCircle className="h-3.5 w-3.5" /> WhatsApp / PK Desk: {CONTACT_WHATSAPP_DISPLAY}
+        </Button>
+      </a>
+      <a href={CONTACT_US_DESK_TEL}>
+        <Button size="sm" variant="outline">
+          <Phone className="h-3.5 w-3.5" /> US Desk: {CONTACT_US_DESK_DISPLAY}
+        </Button>
+      </a>
+      <a href={`mailto:${OWNER_EMAIL}`}>
+        <Button size="sm" variant="ghost">
+          <Mail className="h-3.5 w-3.5" /> {OWNER_EMAIL}
+        </Button>
+      </a>
+    </div>
+  );
+}
 
-const INQUIRY_TYPES = [
-  "Book a Live Product Demo",
-  "Purchase SaaS Subscription",
-  "Custom On-Premise / Cloud Deployment",
-  "White-Label Source Code Acquisition",
-  "AI / Computer Vision Integration Consultation",
-];
-
-type Status = "idle" | "sending" | "sent" | "error";
+type Status = "idle" | "sending" | "sent";
 
 /**
- * “Book an Enterprise Demo & Custom Deployment” section — submissions are
- * delivered straight to the owner's inbox through FormSubmit.co
- * (mdmuneebdesigns@gmail.com), as chosen by the product owner.
- * Primary path: AJAX fetch. Fallback: classic HTML form POST (spec-required).
+ * “Book an Enterprise Demo & Custom Deployment” section. Every submission is
+ * stored in the enterprise_leads table FIRST (server-side), then forwarded to
+ * the owner's FormSubmit inbox from the server — so browser/iframe network
+ * issues can never show a false "Send failed" or lose a lead.
  */
 export function EnterpriseDemoSection() {
+  const submitLead = useServerFn(submitEnterpriseLead);
   const [status, setStatus] = useState<Status>("idle");
+  const [showModal, setShowModal] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
     company: "",
-    team_size: TEAM_SIZES[0]!,
-    inquiry_type: INQUIRY_TYPES[0]!,
+    team_size: LEAD_TEAM_SIZES[0] as string,
+    inquiry_type: LEAD_INQUIRY_TYPES[0] as string,
     message: "",
   });
   const [honey, setHoney] = useState("");
@@ -64,52 +99,36 @@ export function EnterpriseDemoSection() {
     e.preventDefault();
     // Honeypot: bots fill it, humans never see it — pretend success silently.
     if (honey) {
+      setShowModal(true);
       setStatus("sent");
       return;
     }
     setStatus("sending");
-    // Give up after 20s so the UI never hangs on a slow or blocked network.
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20_000);
     try {
-      const res = await fetch(FORMSUBMIT_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          ...form,
-          _subject: "🚀 New HCM Lite Enterprise Demo / License Inquiry!",
-          _template: "table",
-          _captcha: "false",
+      const res = await submitLead({
+        data: {
+          fullName: form.name,
+          email: form.email,
+          phone: form.phone,
+          companyName: form.company,
+          teamSize: form.team_size,
+          inquiryType: form.inquiry_type,
+          message: form.message,
           _honey: honey,
-        }),
-        signal: controller.signal,
+        },
       });
-      clearTimeout(timer);
-      if (!res.ok) throw new Error(`FormSubmit responded ${res.status}`);
+      if (!res.stored) throw new Error(res.error);
+      // Stored in the database — success modal shows regardless of email relay.
+      setShowModal(true);
       setStatus("sent");
-      toast.success("✅ Inquiry received — sent to Muhammad Muneeb.");
-    } catch {
-      clearTimeout(timer);
-      setStatus("error");
-      toast.error("Send failed — please email " + OWNER_EMAIL + " directly.");
+      if (!res.emailed) {
+        toast.success("✅ Inquiry logged — email delivery pending, WhatsApp par fastest response.");
+      }
+    } catch (err) {
+      setStatus("idle");
+      const msg = err instanceof Error ? err.message : "Submission failed";
+      toast.error(msg + " — ya WhatsApp par Rabta karein: " + CONTACT_WHATSAPP_DISPLAY);
     }
-  }
-
-  if (status === "sent") {
-    return (
-      <section id="enterprise" className="mx-auto max-w-3xl scroll-mt-20 px-4 py-16">
-        <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-10 text-center shadow-sm">
-          <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600 dark:text-emerald-400" />
-          <h2 className="mt-4 text-2xl font-bold tracking-tight text-foreground">
-            ✅ Inquiry Received!
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Your request has been sent directly to Muhammad Muneeb ({OWNER_EMAIL}). You'll get a
-            reply within 24 hours — keep an eye on your inbox (and spam folder).
-          </p>
-        </div>
-      </section>
-    );
   }
 
   const field =
@@ -124,27 +143,16 @@ export function EnterpriseDemoSection() {
               <Building2 className="h-3.5 w-3.5" /> 🚀 Enterprise Licensing &amp; Custom Deployment
             </span>
             <h2 className="mt-4 text-3xl font-bold tracking-tight text-foreground">
-              Bring HCM Lite to Your Organization — Book a Personalized Demo or Acquire Full-Stack
-              License
+              Bring HCM Lite to Your Organization — Book a Personalized Demo or Acquire Full-Stack License
             </h2>
             <p className="mt-3 text-sm text-muted-foreground">
-              Looking to deploy AI-powered biometric attendance, automated payroll and custom HR
-              workflows for your team? Fill out the form below and Muhammad Muneeb will get back to
-              you within 24 hours.
+              Looking to deploy AI-powered biometric attendance, automated payroll and custom HR workflows for your
+              team? Fill out the form below and Muhammad Muneeb will get back to you within 24 hours.
             </p>
+            <OwnerContactBadges className="mt-5" />
           </div>
 
-          <form
-            ref={formRef}
-            action="https://formsubmit.co/mdmuneebdesigns@gmail.com"
-            method="POST"
-            onSubmit={handleSubmit}
-            className="mt-8 grid gap-4 md:grid-cols-2"
-          >
-            {/* Hidden FormSubmit configuration */}
-            <input type="hidden" name="_subject" value="🚀 New HCM Lite Enterprise Demo / License Inquiry!" />
-            <input type="hidden" name="_template" value="table" />
-            <input type="hidden" name="_captcha" value="false" />
+          <form ref={formRef} onSubmit={handleSubmit} className="mt-8 grid gap-4 md:grid-cols-2">
             {/* Honeypot spam protection */}
             <input
               type="text"
@@ -210,7 +218,7 @@ export function EnterpriseDemoSection() {
                 value={form.team_size}
                 onChange={(e) => update("team_size", e.target.value)}
               >
-                {TEAM_SIZES.map((t) => (
+                {LEAD_TEAM_SIZES.map((t) => (
                   <option key={t} value={t}>
                     {t}
                   </option>
@@ -226,7 +234,7 @@ export function EnterpriseDemoSection() {
                 value={form.inquiry_type}
                 onChange={(e) => update("inquiry_type", e.target.value)}
               >
-                {INQUIRY_TYPES.map((t) => (
+                {LEAD_INQUIRY_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {t}
                   </option>
@@ -254,7 +262,7 @@ export function EnterpriseDemoSection() {
               >
                 {status === "sending" ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Sending your inquiry…
+                    <Loader2 className="h-4 w-4 animate-spin" /> Logging your inquiry…
                   </>
                 ) : (
                   <>
@@ -262,32 +270,54 @@ export function EnterpriseDemoSection() {
                   </>
                 )}
               </Button>
-              {status === "error" && (
-                <div className="flex flex-col items-center gap-2 text-xs text-muted-foreground">
-                  <p className="flex items-center gap-1.5">
-                    <Mail className="h-3.5 w-3.5" />
-                    Direct email fallback:{" "}
-                    <a href={`mailto:${OWNER_EMAIL}`} className="text-primary underline">
-                      {OWNER_EMAIL}
-                    </a>
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => formRef.current?.submit()}
-                  >
-                    <Send className="h-3.5 w-3.5" /> Send via standard form instead
-                  </Button>
-                </div>
-              )}
               <p className="text-xs text-muted-foreground">
-                Submissions go straight to {OWNER_EMAIL} — no data is stored on this site.
+                Har submission database mein log hoti hai aur Muhammad Muneeb ko deliver hoti hai — WhatsApp pe fastest
+                response milta hai.
               </p>
             </div>
           </form>
         </div>
       </div>
+
+      {/* Emerald success modal — shown as soon as the lead is stored. */}
+      {showModal && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true">
+          <div className="relative w-full max-w-md rounded-2xl border border-emerald-500/40 bg-card p-8 text-center shadow-2xl">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-3 top-3 h-8 w-8"
+              onClick={() => {
+                setShowModal(false);
+                setStatus("idle");
+                setForm({
+                  name: "",
+                  email: "",
+                  phone: "",
+                  company: "",
+                  team_size: LEAD_TEAM_SIZES[0] as string,
+                  inquiry_type: LEAD_INQUIRY_TYPES[0] as string,
+                  message: "",
+                });
+              }}
+              aria-label="Close"
+            >
+              ✕
+            </Button>
+            <CheckCircle2 className="mx-auto h-14 w-14 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="mt-4 text-2xl font-bold tracking-tight text-foreground">
+              ✅ Request Received!
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Your inquiry is logged for Muhammad Muneeb. Aap ko 24 hours ke andar reply milega — WhatsApp par message
+              karein to response fastest hota hai.
+            </p>
+            <div className="mt-5">
+              <OwnerContactBadges />
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

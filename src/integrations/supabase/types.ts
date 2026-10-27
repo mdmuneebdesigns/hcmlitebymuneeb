@@ -270,6 +270,27 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_events: {
+        Row: {
+          action: string
+          created_at: string
+          demo_id: string
+          id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          demo_id: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          demo_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           created_at: string
@@ -391,6 +412,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      enterprise_leads: {
+        Row: {
+          company_name: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          inquiry_type: string
+          message: string
+          phone: string
+          selected_plan: string | null
+          status: string
+          team_size: string | null
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          inquiry_type?: string
+          message: string
+          phone: string
+          selected_plan?: string | null
+          status?: string
+          team_size?: string | null
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          inquiry_type?: string
+          message?: string
+          phone?: string
+          selected_plan?: string | null
+          status?: string
+          team_size?: string | null
+        }
+        Relationships: []
       }
       leave_requests: {
         Row: {
