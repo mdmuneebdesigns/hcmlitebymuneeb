@@ -22,6 +22,13 @@
       "when": 1793127572213,
       "tag": "0002_enterprise_leads_and_demo_events",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793128840785,
+      "tag": "0003_create_workspace_licenses",
+      "breakpoints": true
     }
   ]
 }

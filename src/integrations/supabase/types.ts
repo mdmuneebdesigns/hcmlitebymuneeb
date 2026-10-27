@@ -719,6 +719,65 @@ export type Database = {
         }
         Relationships: []
       }
+      workspace_licenses: {
+        Row: {
+          activated_at: string | null
+          assigned_company_name: string | null
+          assigned_email: string | null
+          bound_device_hash: string | null
+          bound_device_info: string | null
+          company_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          last_active_at: string | null
+          license_key: string
+          max_devices: number
+          plan_type: string
+          status: string
+        }
+        Insert: {
+          activated_at?: string | null
+          assigned_company_name?: string | null
+          assigned_email?: string | null
+          bound_device_hash?: string | null
+          bound_device_info?: string | null
+          company_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_active_at?: string | null
+          license_key: string
+          max_devices?: number
+          plan_type: string
+          status?: string
+        }
+        Update: {
+          activated_at?: string | null
+          assigned_company_name?: string | null
+          assigned_email?: string | null
+          bound_device_hash?: string | null
+          bound_device_info?: string | null
+          company_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_active_at?: string | null
+          license_key?: string
+          max_devices?: number
+          plan_type?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_licenses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
