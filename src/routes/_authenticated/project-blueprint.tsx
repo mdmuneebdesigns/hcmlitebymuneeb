@@ -10,15 +10,16 @@ import { getBlueprintPdf } from "@/lib/blueprint.functions";
 import { BLUEPRINT_SECTIONS, type BlueprintBlock } from "@/lib/blueprint-report";
 
 export const Route = createFileRoute("/_authenticated/project-blueprint")({
+  staticData: { sitemap: false },
   head: () => ({
-    meta: [
-      { title: "Project Blueprint — HCM Lite" },
-      { name: "description", content: "Complete A-to-Z technical architecture report of HCM Lite with one-click PDF download." },
-      { property: "og:title", content: "Project Blueprint — HCM Lite" },
-      { property: "og:description", content: "Complete A-to-Z technical architecture report of HCM Lite with one-click PDF download." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
+    meta: pageMeta({
+      title: "System Architecture & AI Engineering Blueprint | HCM Lite by Muhammad Muneeb",
+      description:
+        "16-table PostgreSQL schema with RLS security, server-side authorization, a Pakistan-timezone attendance engine, Haversine geofence pipeline, AI pipelines and payroll tax engine — full A-to-Z technical report.",
+      path: "/project-blueprint",
+      indexable: false,
+    }),
+    scripts: jsonLdScripts(blueprintJsonLd()),
   }),
   component: BlueprintPage,
 });

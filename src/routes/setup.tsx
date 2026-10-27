@@ -21,15 +21,14 @@ export const Route = createFileRoute("/setup")({
       throw redirect({ to: "/auth", search: { redirect: "/setup" }, replace: true });
     }
   },
+  staticData: { sitemap: false },
   head: () => ({
-    meta: [
-      { title: "Company setup — HCM Lite" },
-      { name: "description", content: "Configure your company profile, office hours and GPS geofence in HCM Lite." },
-      { property: "og:title", content: "Company setup — HCM Lite" },
-      { property: "og:description", content: "Configure your company profile, office hours and GPS geofence in HCM Lite." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
+    meta: pageMeta({
+      title: "Workspace Setup Wizard — Configure Company & Geofence | HCM Lite",
+      description: "Initialize your company rules, office hours and GPS geofence coordinates to launch your HCM Lite workspace.",
+      path: "/setup",
+      indexable: false,
+    }),
   }),
   component: SetupPage,
 });
