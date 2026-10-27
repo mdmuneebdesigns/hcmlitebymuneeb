@@ -53,3 +53,12 @@ Plan approved: `.lovable/plan/hcm-lite-master-architectural-implementation-plan-
 
 ## Demo state (as of 2026-10-26)
 Database is intentionally EMPTY (fresh /setup state for judging — zero dummy data). Test flow verified end-to-end on 2026-10-26: /setup wizard → Admin auto sign-in → payroll draft run → payslip PDF download (October_2026_payslip.pdf, math + layout QA'd). Test data was wiped after verification. Create real accounts via /setup; Judge Reset (Admin dashboard) wipes everything back to /setup.
+
+## SEO / AEO / GEO + Enterprise Demo (2026-10-27; complete)
+- [x] Unique per-route metadata via `pageMeta()` (`src/lib/seo.ts`): unique title/description/OG/Twitter + `og:url` on every route; canonical links on public leaves; `noindex, nofollow` on `/auth`, `/setup`, `/project-blueprint` (login-gated) and ALL authenticated views (robots meta on `_authenticated` layout)
+- [x] JSON-LD `@graph` (WebApplication + Organization + ContactPoint + Person + FAQPage with 6 Q&A) on `/` and `/welcome`; TechArticle graph on `/project-blueprint`
+- [x] FAQ accordion on landing (`#faq`) mirroring FAQPage schema item-for-item; semantic `<main>` landmark, single `<h1>`
+- [x] Sitemap: router-derived helper `src/lib/sitemap.ts` + server route `src/routes/sitemap[.]xml.ts` (BASE_URL https://hcmlitebymuneeb.lovable.app); `staticData.sitemap` decision on every route; / and /welcome included, private subtree excluded — verified 200 application/xml with 2 URLs
+- [x] robots.txt: all search + AI crawlers (GPTBot, OAI-SearchBot, ChatGPT-User, PerplexityBot, Google-Extended, ClaudeBot) allowed + Sitemap directive — verified 200
+- [x] `public/llms.txt` + `public/llms-full.txt` (llmstxt.org spec) — verified 200
+- [x] Enterprise Demo section (`#enterprise`, `src/components/landing-extras.tsx`): 7 fields, honeypot, FormSubmit AJAX → mdmuneebdesigns@gmail.com, 20s timeout, emerald success state, toast, navbar + footer links, HTML form-POST fallback button on error. Endpoint verified reachable (HTTP 200, CORS open); delivery needs one-time FormSubmit activation email click by owner
