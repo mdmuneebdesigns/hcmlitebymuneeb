@@ -63,6 +63,29 @@ export function hcmJsonLdGraph(): Record<string, unknown> {
           "Pakistani progressive tax-slab payroll with instant PDF payslips",
           "PostgreSQL Row-Level Security with immutable before/after audit logs",
         ],
+        offers: [
+          {
+            "@type": "Offer",
+            name: "Interactive Demo Trial",
+            price: "0",
+            priceCurrency: "USD",
+            description: "Free interactive demo — 5 actions per module (employees, check-ins, leaves, receipts, AI queries).",
+          },
+          {
+            "@type": "Offer",
+            name: "Monthly Cloud Subscription",
+            price: "49",
+            priceCurrency: "USD",
+            description: "30-day license, strictly 1 device lock — unlimited employees, payroll and AI assistant.",
+          },
+          {
+            "@type": "Offer",
+            name: "Lifetime Enterprise / One-Time License",
+            price: "499",
+            priceCurrency: "USD",
+            description: "One-time payment, lifetime validity, source code and custom setup included.",
+          },
+        ],
       },
       {
         "@type": "Organization",
