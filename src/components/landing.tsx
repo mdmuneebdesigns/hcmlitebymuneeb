@@ -126,6 +126,11 @@ export function LandingPage() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
+            <a href="#enterprise" className="hidden lg:block">
+              <Button variant="outline" size="sm">
+                💼 Book Enterprise Demo
+              </Button>
+            </a>
             <ThemeToggle floating={false} className="relative bottom-auto left-auto" />
             <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/auth" })}>
               Sign In
