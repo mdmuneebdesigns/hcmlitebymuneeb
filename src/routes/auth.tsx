@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMe } from "@/lib/auth.functions";
-import { getFirstRunStatus } from "@/lib/setup.functions";
+import { getFirstRunStatus, provisionFirstAdmin } from "@/lib/setup.functions";
 import { PasswordStrengthChecklist, isPasswordStrong } from "@/components/password-checklist";
 import { BrandLogo } from "@/components/brand-logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,7 +95,9 @@ function AuthPage() {
 
   /**
    * Sign-up is offered only on a fresh install (no company yet) — after
-   * setup completes, accounts are created by the Admin/HR only.
+   * setup completes, accounts are created by the Admin/HR only. The server
+   * provisions a confirmed account (fresh-install guard inside), then we
+   * sign straight in and route to /setup.
    */
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
@@ -104,29 +106,22 @@ function AuthPage() {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName.trim() } },
+    const provisioned = await provisionFirstAdmin({
+      data: { adminFullName: fullName.trim(), adminEmail: email.trim(), adminPassword: password },
     });
-    if (error) {
-      toast.error(error.message);
+    if (!provisioned.ok) {
+      toast.error(provisioned.error);
       setLoading(false);
       return;
     }
-    if (data.user && (data.user.identities ?? []).length === 0) {
-      toast.error("This email is already registered — please sign in instead");
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) {
+      toast.success("Account created — please sign in");
       setLoading(false);
       return;
     }
-    if (data.session) {
-      toast.success("Account created — let's set up your company");
-      navigate({ to: "/setup", replace: true });
-      return;
-    }
-    // Email confirmation is required by the server config.
-    toast.info("Account created — confirm your email, then sign in here");
-    setLoading(false);
+    toast.success("Account created — let's set up your company");
+    navigate({ to: "/setup", replace: true });
   }
 
   return (
