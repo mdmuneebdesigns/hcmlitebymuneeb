@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Building2,
@@ -54,9 +54,6 @@ import type { LicenseRow } from "@/lib/license";
 
 export const Route = createFileRoute("/super-admin")({
   ssr: false,
-  beforeLoad: () => {
-    throw redirect({ to: "/super-admin" });
-  },
   staticData: { sitemap: false },
   head: () => ({
     meta: pageMeta({
@@ -159,6 +156,14 @@ function SuperAdminPage() {
     setBusy(true);
     try {
       const result = await fn();
+      // Action fns return { ok: false, error } instead of throwing.
+      const failed =
+        typeof result === "object" && result !== null && "ok" in result && (result as { ok: boolean }).ok === false;
+      if (failed) {
+        const err = (result as { error?: string }).error ?? "Action failed";
+        toast.error(err);
+        return null;
+      }
       if (successMessage) toast.success(successMessage);
       await refresh(pin);
       return result;

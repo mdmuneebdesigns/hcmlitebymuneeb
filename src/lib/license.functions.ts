@@ -297,8 +297,8 @@ export const superAdminLicenseAction = createServerFn({ method: "POST" })
           bound_device_info: null,
           activated_at: null,
           last_active_at: null,
-          // A revoked/expired key comes back as a fresh claimable license.
-          status: row.plan_type === "lifetime" ? "unclaimed" : "unclaimed",
+          // The key comes back as a fresh claimable license.
+          status: "unclaimed",
         })
         .eq("id", row.id);
       if (error) return { ok: false, error: "Could not reset the device lock" };
