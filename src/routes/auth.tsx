@@ -11,6 +11,7 @@ import { getMe } from "@/lib/auth.functions";
 import { getFirstRunStatus, provisionFirstAdmin } from "@/lib/setup.functions";
 import { PasswordStrengthChecklist, isPasswordStrong } from "@/components/password-checklist";
 import { BrandLogo } from "@/components/brand-logo";
+import { pageMeta } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({

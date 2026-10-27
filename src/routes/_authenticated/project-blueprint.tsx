@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getBlueprintPdf } from "@/lib/blueprint.functions";
 import { BLUEPRINT_SECTIONS, type BlueprintBlock } from "@/lib/blueprint-report";
+import { pageMeta, jsonLdScripts, blueprintJsonLd } from "@/lib/seo";
 
 export const Route = createFileRoute("/_authenticated/project-blueprint")({
   staticData: { sitemap: false },

@@ -10,6 +10,7 @@ import { completeFirstRunSetup, getFirstRunStatus } from "@/lib/setup.functions"
 import { getMe, type Me } from "@/lib/auth.functions";
 import { getRealUserLocation } from "@/lib/geo";
 import { BrandLogo } from "@/components/brand-logo";
+import { pageMeta } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/setup")({
