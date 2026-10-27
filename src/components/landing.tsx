@@ -142,6 +142,7 @@ export function LandingPage() {
         </div>
       </header>
 
+      <main>
       {/* Hero */}
       <section id="top" className="relative overflow-hidden px-4 py-20 sm:py-28">
         <div
