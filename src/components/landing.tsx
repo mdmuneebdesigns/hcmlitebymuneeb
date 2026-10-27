@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { EnterpriseDemoSection, HcmFaqSection, OwnerContactBadges, FloatingWhatsApp } from "@/components/landing-extras";
+import { EnterpriseDemoSection, HcmFaqSection, OwnerContactBadges, FloatingBuyWhatsApp } from "@/components/landing-extras";
 import { DemoMode, startDemoMode } from "@/components/demo-mode";
 import { supabase } from "@/integrations/supabase/client";
 

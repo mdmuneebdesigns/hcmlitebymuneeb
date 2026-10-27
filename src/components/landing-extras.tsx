@@ -20,25 +20,42 @@ import {
 } from "@/lib/leads";
 import { FAQ_ITEMS } from "@/lib/seo";
 
-/** Floating circular WhatsApp CTA for public pages (bottom-right). */
-export function FloatingWhatsApp() {
+/**
+ * Floating bottom-right stack, always on top (z-50):
+ *   1. Attractive pulsing "Buy Now" pill → scrolls to the licensing form.
+ *   2. Green WhatsApp chat circle.
+ * Nothing can hide behind the AI chat button — the stack owns the corner on
+ * every public page.
+ */
+export function FloatingBuyWhatsApp() {
   return (
-    <a
-      href={CONTACT_WHATSAPP_URL}
-      target="_blank"
-      rel="noreferrer"
-      aria-label="Chat on WhatsApp"
-      className="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg transition-transform hover:scale-105"
-    >
-      <MessageCircle className="h-5 w-5" />
-      <span className="absolute -right-1 -top-1 rounded-full bg-foreground px-1.5 py-0.5 text-[8px] font-bold text-background">
-        Buy
-      </span>
-    </a>
+    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2.5">
+      <a
+        href="#enterprise"
+        className="group relative flex items-center gap-2 rounded-full gradient-brand px-4 py-2.5 text-sm font-bold text-white shadow-xl ring-4 ring-primary/20 transition-transform hover:scale-105"
+        aria-label="Buy HCM Lite license"
+      >
+        <span aria-hidden className="absolute inset-0 -z-10 animate-ping rounded-full gradient-brand opacity-30" />
+        <ShoppingCart className="h-4 w-4" />
+        Buy Now — from $49
+        <span className="absolute -right-1.5 -top-1.5 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white shadow">
+          Sale
+        </span>
+      </a>
+      <a
+        href={CONTACT_WHATSAPP_URL}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Chat on WhatsApp"
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg transition-transform hover:scale-105"
+      >
+        <MessageCircle className="h-5 w-5" />
+      </a>
+    </div>
   );
 }
 
-/** Inline + floating owner-contact badges (WhatsApp PK desk, US desk, email). */
+/** Inline owner-contact badges — PK number (WhatsApp + call) and US desk (WhatsApp only). */
 export function OwnerContactBadges({ className }: { className?: string }) {
   return (
     <div className={`flex flex-wrap items-center justify-center gap-2 ${className ?? ""}`}>
@@ -47,9 +64,14 @@ export function OwnerContactBadges({ className }: { className?: string }) {
           <MessageCircle className="h-3.5 w-3.5" /> WhatsApp / PK Desk: {CONTACT_WHATSAPP_DISPLAY}
         </Button>
       </a>
-      <a href={CONTACT_US_DESK_TEL}>
+      <a href={CONTACT_PK_CALL_TEL}>
         <Button size="sm" variant="outline">
-          <Phone className="h-3.5 w-3.5" /> US Desk: {CONTACT_US_DESK_DISPLAY}
+          <Phone className="h-3.5 w-3.5" /> Call (PK): {CONTACT_WHATSAPP_DISPLAY}
+        </Button>
+      </a>
+      <a href={CONTACT_US_WHATSAPP_URL} target="_blank" rel="noreferrer">
+        <Button size="sm" variant="outline" className="border-emerald-600/40 text-emerald-700 dark:text-emerald-400">
+          <MessageCircle className="h-3.5 w-3.5" /> US Desk (WhatsApp only): {CONTACT_US_DESK_DISPLAY}
         </Button>
       </a>
       <a href={`mailto:${OWNER_EMAIL}`}>
