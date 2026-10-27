@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
 import { LandingPage } from "@/components/landing";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -40,10 +39,5 @@ function Index() {
     };
   }, [navigate]);
 
-  return (
-    <>
-      <LandingPage />
-      <Loader2 className="hidden" />
-    </>
-  );
+  return <LandingPage />;
 }
