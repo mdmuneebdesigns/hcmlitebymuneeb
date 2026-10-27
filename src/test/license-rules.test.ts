@@ -16,9 +16,9 @@ describe("license key generation", () => {
   it("generates monthly keys in the HCM-30D-XXXXXXXX format", () => {
     const key = generateLicenseKey("monthly_30d");
     expect(key).toMatch(/^HCM-30D-[A-Z2-9]{8}$/);
-    expect(key).not.toContain("0");
-    expect(key).not.toContain("O");
-    expect(key).not.toContain("1");
+    // Unambiguous alphabet: the random suffix has no 0/O/1/I/L.
+    const suffix = key.split("-")[2];
+    expect(suffix).not.toMatch(/[01IL]/);
   });
 
   it("generates lifetime and trial keys with their own prefixes", () => {
