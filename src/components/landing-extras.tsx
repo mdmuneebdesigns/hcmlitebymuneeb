@@ -263,13 +263,23 @@ export function EnterpriseDemoSection() {
                 )}
               </Button>
               {status === "error" && (
-                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Mail className="h-3.5 w-3.5" />
-                  Direct email fallback:{" "}
-                  <a href={`mailto:${OWNER_EMAIL}`} className="text-primary underline">
-                    {OWNER_EMAIL}
-                  </a>
-                </p>
+                <div className="flex flex-col items-center gap-2 text-xs text-muted-foreground">
+                  <p className="flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5" />
+                    Direct email fallback:{" "}
+                    <a href={`mailto:${OWNER_EMAIL}`} className="text-primary underline">
+                      {OWNER_EMAIL}
+                    </a>
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => formRef.current?.submit()}
+                  >
+                    <Send className="h-3.5 w-3.5" /> Send via standard form instead
+                  </Button>
+                </div>
               )}
               <p className="text-xs text-muted-foreground">
                 Submissions go straight to {OWNER_EMAIL} — no data is stored on this site.
