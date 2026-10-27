@@ -1,0 +1,24 @@
+# HCM Lite
+
+> Enterprise-grade, AI-powered Human Capital Management (HCM) suite: biometric camera attendance with GPS geofencing, Pakistani tax-slab payroll with instant PDF payslips, a Roman Urdu + English AI assistant, and immutable audit logs.
+
+HCM Lite is built by **Muhammad Muneeb** — AI Engineer, Data Scientist & Full-Stack Developer (contact: mdmuneebdesigns@gmail.com). Live app: https://hcmlitebymuneeb.lovable.app
+
+## Key innovations
+
+- **Biometric attendance:** live camera frame analysis at check-in/out, with on-device face presence detection before a punch is accepted.
+- **Multi-stage GPS + Haversine geofence:** device position resolves through high-accuracy GPS, then Wi-Fi positioning, then IP geolocation; punches must fall inside the Haversine distance radius around the configured office coordinates. All attendance math runs in Pakistan Standard Time (Asia/Karachi).
+- **Roman Urdu + English AI assistant:** a role-scoped, tool-calling AI gateway that parses natural-language leave requests (e.g. "Mujhe Monday aur Tuesday chutti chahiye") into pre-filled forms and answers HR analytics questions; every call is logged.
+- **Pakistani payroll engine:** gross pay (basic + 40% house rent + 10% medical), attendance-based deductions and the active progressive income-tax slab, with instant server-generated PDF payslips and immutable finalized runs.
+- **Security:** 16-table PostgreSQL schema with Row-Level Security on every table, roles stored in a protected user_roles table, server-side role verification on every privileged function, and immutable before/after audit logs.
+
+## Pages
+
+- [Home](/): SaaS landing page — features, architecture overview, FAQ and the enterprise demo booking form.
+- [Welcome tour](/welcome): Shareable tour path for the same landing experience.
+
+## Optional
+
+- [Workspace Setup Wizard](/setup): Company profile, office hours and GPS geofence configuration — requires signing in first.
+- [Sign in](/auth): Role-based Admin / HR / Employee portal access.
+- [Architecture Blueprint](/project-blueprint): Full technical report (schema, RLS, pipelines) — available inside the app after sign-in.
