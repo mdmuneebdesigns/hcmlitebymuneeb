@@ -12,7 +12,7 @@ import { getFirstRunStatus, provisionFirstAdmin } from "@/lib/setup.functions";
 import { PasswordStrengthChecklist, isPasswordStrong } from "@/components/password-checklist";
 import { BrandLogo } from "@/components/brand-logo";
 import { pageMeta } from "@/lib/seo";
-import { FloatingWhatsApp } from "@/components/landing-extras";
+import { FloatingBuyWhatsApp } from "@/components/landing-extras";
 import { DemoMode, startDemoMode } from "@/components/demo-mode";
 import { LicenseLockScreen } from "@/components/license-lock";
 import { checkDeviceLock, type DeviceLockResult } from "@/lib/license.functions";
@@ -156,7 +156,7 @@ function AuthPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
-      <FloatingWhatsApp />
+      <FloatingBuyWhatsApp />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2">

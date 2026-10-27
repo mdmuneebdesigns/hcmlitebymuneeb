@@ -10,7 +10,6 @@ import {
   FileText,
   Fingerprint,
   MessageCircle,
-  Phone,
   Send,
   Users,
   X,
@@ -21,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { submitEnterpriseLead } from "@/lib/leads.functions";
-import { CONTACT_WHATSAPP_DISPLAY, CONTACT_WHATSAPP_URL, CONTACT_US_DESK_DISPLAY, CONTACT_US_DESK_TEL, OWNER_EMAIL, LEAD_INQUIRY_TYPES } from "@/lib/leads";
+import { CONTACT_WHATSAPP_DISPLAY, CONTACT_WHATSAPP_URL, CONTACT_US_DESK_DISPLAY, CONTACT_US_WHATSAPP_URL, OWNER_EMAIL, LEAD_INQUIRY_TYPES } from "@/lib/leads";
 import {
   DEMO_QUOTA_LABELS,
   DEMO_QUOTA_LIMIT,
@@ -260,9 +259,9 @@ function QuotaModal({ quotaKey, onClose, demoActive }: { quotaKey: DemoQuotaKey 
                   <MessageCircle className="h-4 w-4" /> 💬 Chat on WhatsApp ({CONTACT_WHATSAPP_DISPLAY})
                 </Button>
               </a>
-              <a href={CONTACT_US_DESK_TEL} className="w-full">
+              <a href={CONTACT_US_WHATSAPP_URL} target="_blank" rel="noreferrer" className="w-full">
                 <Button variant="outline" className="w-full">
-                  <Phone className="h-4 w-4" /> 📞 US Desk: {CONTACT_US_DESK_DISPLAY}
+                  <MessageCircle className="h-4 w-4" /> 💬 US Desk (WhatsApp): {CONTACT_US_DESK_DISPLAY}
                 </Button>
               </a>
               <Button className="gradient-brand w-full text-white" onClick={() => setShowLicense((v) => !v)}>

@@ -93,6 +93,7 @@ function SuperAdminPage() {
   const [genPlan, setGenPlan] = useState<LicensePlan>("monthly_30d");
   const [genName, setGenName] = useState("");
   const [genEmail, setGenEmail] = useState("");
+  const [genPhone, setGenPhone] = useState("");
   const [genCompany, setGenCompany] = useState("");
   const [lastGenerated, setLastGenerated] = useState<{ key: string; plan: LicensePlan } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -302,7 +303,7 @@ function SuperAdminPage() {
                 <CardDescription>Generate a 1-device-locked key and send it to the client on WhatsApp.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid gap-3 sm:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                   <div className="space-y-2">
                     <Label htmlFor="genPlan">Plan</Label>
                     <select
@@ -325,6 +326,10 @@ function SuperAdminPage() {
                     <Input id="genEmail" type="email" value={genEmail} onChange={(e) => setGenEmail(e.target.value)} placeholder="client@company.com" />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="genPhone">Client WhatsApp (optional)</Label>
+                    <Input id="genPhone" value={genPhone} onChange={(e) => setGenPhone(e.target.value)} placeholder="+92 300 1234567" />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="genCompany">Company</Label>
                     <Input id="genCompany" value={genCompany} onChange={(e) => setGenCompany(e.target.value)} placeholder="Acme Pvt Ltd" />
                   </div>
@@ -342,16 +347,16 @@ function SuperAdminPage() {
                       <Button size="sm" variant="outline" onClick={() => void handleCopyKey(lastGenerated.key)}>
                         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} Copy
                       </Button>
-                      <Button size="sm" asChild variant="outline">
+                      <Button size="sm" asChild variant="outline" className="border-emerald-600/40 text-emerald-700 dark:text-emerald-400">
                         <a
                           href={whatsappLink(
-                            WHATSAPP_PK,
-                            `Assalam o Alaikum! Aapki HCM Lite license key: ${lastGenerated.key} (${PLAN_LABELS[lastGenerated.plan]}). Isay /setup par activate karein — 1 device lock applied.`,
+                            genPhone.replace(/[^0-9]/g, "") || WHATSAPP_PK,
+                            `Assalam o Alaikum ${genName.trim() || ""}! Aapki HCM Lite license key: ${lastGenerated.key} (${PLAN_LABELS[lastGenerated.plan]}). Isay https://hcmlitebymuneeb.lovable.app/setup par activate karein — 1 device lock applied. Koi masla ho to WhatsApp par rabta karein.`,
                           )}
                           target="_blank"
                           rel="noreferrer"
                         >
-                          <MessageCircle className="h-4 w-4" /> Send on WhatsApp
+                          <MessageCircle className="h-4 w-4" /> Auto-Send on WhatsApp
                         </a>
                       </Button>
                     </div>
@@ -385,6 +390,19 @@ function SuperAdminPage() {
                     <div className="flex flex-wrap gap-2">
                       <Button size="sm" variant="outline" onClick={() => void handleCopyKey(lic.license_key)}>
                         <Copy className="h-3.5 w-3.5" /> Copy
+                      </Button>
+                      <Button size="sm" asChild variant="outline" className="border-emerald-600/40 text-emerald-700 dark:text-emerald-400">
+                        <a
+                          href={whatsappLink(
+                            leads.find((l) => l.email.toLowerCase() === (lic.assigned_email ?? "").toLowerCase())?.phone.replace(/[^0-9]/g, "") ||
+                              WHATSAPP_PK,
+                            `Assalam o Alaikum! Aapki HCM Lite license key: ${lic.license_key} (${PLAN_LABELS[lic.plan_type]}). Isay https://hcmlitebymuneeb.lovable.app/setup par activate karein — 1 device lock applied.`,
+                          )}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                        </a>
                       </Button>
                       <Button
                         size="sm"

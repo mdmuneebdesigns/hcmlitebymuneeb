@@ -8,7 +8,7 @@ import { aiChat, type ChatMessage } from "@/lib/ai.functions";
 import { listMyNotifications, markNotificationsRead, type NotificationDto } from "@/lib/comms.functions";
 import { useServerFn } from "@tanstack/react-start";
 
-const PUBLIC_PATHS = ["/", "/auth", "/setup"];
+const PUBLIC_PATHS = ["/", "/welcome", "/auth", "/setup"];
 
 /** Floating notification bell + AI assistant panel, visible on signed-in pages only. */
 export function FloatingWidgets() {
