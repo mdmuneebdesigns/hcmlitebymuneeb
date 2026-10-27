@@ -1,12 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Building2, CheckCircle2, Loader2, Mail, MessageCircle, Phone, Send, ShoppingCart } from "lucide-react";
+import { Bot, Building2, CheckCircle2, Loader2, Mail, MessageCircle, Phone, Send, ShoppingCart, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { siteChat, type ChatMessage } from "@/lib/ai.functions";
 import { submitEnterpriseLead } from "@/lib/leads.functions";
 import {
   CONTACT_WHATSAPP_DISPLAY,
@@ -20,16 +22,139 @@ import {
 } from "@/lib/leads";
 import { FAQ_ITEMS } from "@/lib/seo";
 
+const SITE_PROMPTS = [
+  "Price kitni hai?",
+  "Demo kaise try karun?",
+  "Kaun se modules hain?",
+  "Contact number kya hai?",
+];
+
+/**
+ * Public AI assistant for website visitors (no login needed): answers questions
+ * about pricing, modules, demo, licensing and contacts. AI-generated badge shown.
+ */
+function SiteAssistant() {
+  const chatFn = useServerFn(siteChat);
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+  }, [messages, busy]);
+
+  async function send(content: string) {
+    const trimmed = content.trim();
+    if (!trimmed || busy) return;
+    const next: ChatMessage[] = [...messages, { role: "user", content: trimmed }];
+    setMessages(next);
+    setText("");
+    setBusy(true);
+    try {
+      const res = await chatFn({ data: { messages: next.slice(-10) } });
+      setMessages((prev) => [...prev, { role: "assistant", content: res.reply }]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Assistant abhi available nahi — thori dair baad try karein, ya WhatsApp karein." },
+      ]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-12 w-12 items-center justify-center rounded-full gradient-brand text-white shadow-lg ring-4 ring-primary/20 transition-transform hover:scale-105"
+        aria-label={open ? "Close assistant" : "Ask AI assistant"}
+      >
+        {open ? <X className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
+      </button>
+      {open && (
+        <div className="fixed bottom-44 right-5 z-50 flex h-[440px] w-[360px] max-w-[calc(100vw-2rem)] flex-col rounded-xl border bg-background shadow-2xl">
+          <div className="flex items-center justify-between border-b px-3 py-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">HCM Lite Assist</span>
+              <Badge variant="secondary" className="text-[10px]">AI-generated</Badge>
+            </div>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div ref={scrollRef} className="flex-1 space-y-3 overflow-auto p-3">
+            {messages.length === 0 && (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Assalam! Main HCM Lite ka website assistant hoon — pricing, modules, demo ya license ke baare mein poochein.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {SITE_PROMPTS.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => send(p)}
+                      className="rounded-full border border-input bg-background px-3 py-1 text-xs text-foreground hover:bg-accent"
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className={m.role === "user" ? "text-right" : ""}>
+                <div
+                  className={
+                    m.role === "user"
+                      ? "inline-block max-w-[85%] rounded-lg bg-primary px-3 py-2 text-left text-sm text-primary-foreground"
+                      : "inline-block max-w-[90%] rounded-lg bg-muted px-3 py-2 text-left text-sm text-foreground"
+                  }
+                >
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {busy && <p className="text-xs text-muted-foreground">Soch raha hoon…</p>}
+          </div>
+          <form
+            className="flex gap-2 border-t p-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void send(text);
+            }}
+          >
+            <Input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Ask anything… (English / Roman Urdu)"
+              className="text-sm"
+            />
+            <Button type="submit" size="icon" disabled={busy} aria-label="Send">
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
+      )}
+    </>
+  );
+}
+
 /**
  * Floating bottom-right stack, always on top (z-50):
- *   1. Attractive pulsing "Buy Now" pill → scrolls to the licensing form.
- *   2. Green WhatsApp chat circle.
- * Nothing can hide behind the AI chat button — the stack owns the corner on
+ *   1. AI assistant toggle (opens the public Q&A panel above the stack).
+ *   2. Attractive pulsing "Buy Now" pill → scrolls to the licensing form.
+ *   3. Green WhatsApp chat circle.
+ * Nothing can hide behind these buttons — the stack owns the corner on
  * every public page.
  */
 export function FloatingBuyWhatsApp() {
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2.5">
+      <SiteAssistant />
       <a
         href="#enterprise"
         className="group relative flex items-center gap-2 rounded-full gradient-brand px-4 py-2.5 text-sm font-bold text-white shadow-xl ring-4 ring-primary/20 transition-transform hover:scale-105"

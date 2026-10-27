@@ -347,3 +347,96 @@ export const policyAnswer = createServerFn({ method: "POST" })
     await logAi(context, "policy_qa", data.question.slice(0, 500), answer, success, Date.now() - started, null);
     return { answer, aiGenerated: true };
   });
+
+// ---------- Public website assistant (landing page visitors, no login) ----------
+
+const SITE_KNOWLEDGE = `
+HCM Lite product knowledge (ground truth for website answers — never invent anything outside this):
+- HCM Lite is a lightweight cloud HRMS built by Muhammad Muneeb (MD. Muneeb). 9 modules / 25 features.
+- Modules: First-run Setup wizard, Org Setup (departments/designations/office location), Employee Directory
+  (+ Employee 360 profiles, CSV import/export), Attendance (GPS geofence check-in/out + camera face check,
+  late/half-day rules), Leave Management (types, quotas, employee requests + HR/Admin approval, Smart AI
+  pre-fill), Payroll Lite (auto salary from attendance/leave, deductions, PDF payslip download),
+  Announcements & Notifications, Audit Logs, AI Assistant (role-scoped, answers from real company data).
+- Key rules: late = arrival after office start + grace; worked hours below threshold = half day;
+  payroll Gross = 1.5 x basic; progressive income tax; attendance timezone is Pakistan Standard Time.
+- Security: server-side role authorization (Admin/HR/Employee), audit trail of every write,
+  all data protected by row-level security in the cloud database.
+- Licensing: 1 license key = 1 device (device fingerprint lock). Plans: Monthly $49/month (was $100),
+  Lifetime $499 one-time (was $999), Free Interactive Demo Trial (5 actions per module, no signup).
+- Demo: "Explore Live Interactive Demo" button on the landing page / login screen — no signup needed.
+- Setup: "Setup Your Company" button → signup → license key → company wizard. Client license keys are
+  sent by the owner via WhatsApp.
+- Owner contacts: WhatsApp / PK Desk +92-314-0263346 (WhatsApp + calls), US Desk +1 (775) 312-8079
+  (WhatsApp only), email mdmuneebdesigns@gmail.com. Booking form: "Enterprise Demo" section on this page.
+- AI: the in-app assistant and this website assistant are powered by OpenAI's GPT (latest model) through
+  the Lovable AI Gateway; in-app answers are role-scoped and logged, and carry an "AI-generated" badge.
+`.trim();
+
+export const siteChat = createServerFn({ method: "POST" })
+  .inputValidator((input: { messages: ChatMessage[] }) => {
+    const messages = Array.isArray(input?.messages) ? input.messages : [];
+    if (messages.length === 0 || messages.length > 10) throw new Error("Invalid message count");
+    for (const m of messages) {
+      if ((m?.role !== "user" && m?.role !== "assistant") || typeof m.content !== "string") {
+        throw new Error("Invalid message");
+      }
+      if (m.content.length > 1000) throw new Error("Message too long");
+    }
+    return { messages };
+  })
+  .handler(async ({ data }): Promise<{ reply: string; aiGenerated: true }> => {
+    const { getRequestHeader } = await import("@tanstack/react-start/server");
+    const forwarded = getRequestHeader("x-forwarded-for") ?? "";
+    const ip = (forwarded ? (forwarded.split(",")[0]?.trim() ?? "") : "") || "unknown";
+    if (rateLimited(`site:${ip}`)) {
+      return { reply: "You are sending messages too quickly — please wait a minute and try again.", aiGenerated: true };
+    }
+
+    const instructions = [
+      "You are the friendly sales & support assistant on the HCM Lite marketing website.",
+      "Visitors are NOT logged in — answer questions about the product, pricing, licensing, demo and contacts.",
+      "Use ONLY the product knowledge below; if something is not covered, say you are not sure and offer the owner's WhatsApp.",
+      "Never invent prices, features or dates. Keep answers short (2-4 sentences). Reply in English or Roman Urdu to match the visitor.",
+      "For purchases, demos or custom requirements, point visitors to: the Buy Now button, the Enterprise Demo booking form on this page, or the owner's WhatsApp (+92-314-0263346).",
+      "You cannot access company data, create accounts, or issue license keys — say so and direct them to the owner.",
+      SITE_KNOWLEDGE,
+    ].join("\n");
+
+    const input: unknown[] = data.messages
+      .slice(-10)
+      .map((m) => ({ role: m.role, content: [{ type: "input_text", text: m.content }] }));
+
+    const started = Date.now();
+    let reply = "";
+    let success = true;
+    try {
+      const response = await callModel(input, instructions, false);
+      reply = extractText(response) || "Maaf kijiye, jawab nahi ban saka — dobara poochein ya WhatsApp par rabta karein.";
+    } catch (e) {
+      success = false;
+      reply =
+        e instanceof GatewayError && e.code === "rate_limited"
+          ? "The AI service is busy right now — please try again in a moment, or WhatsApp us."
+          : "The assistant is unavailable right now. Please try again shortly, or WhatsApp us at +92-314-0263346.";
+      console.error("[siteChat]", e);
+    }
+
+    // Best-effort logging (user_id nullable for public visitors).
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin.from("ai_logs").insert({
+        user_id: null,
+        feature: "site_chat",
+        question: (data.messages.at(-1)?.content ?? "").slice(0, 2000),
+        answer: reply.slice(0, 4000),
+        success,
+        latency_ms: Math.round(Date.now() - started),
+        tool_calls: null as never,
+      });
+    } catch (e) {
+      console.error("[ai_logs] site insert failed:", e);
+    }
+
+    return { reply, aiGenerated: true };
+  });
