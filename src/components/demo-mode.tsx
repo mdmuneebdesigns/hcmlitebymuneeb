@@ -497,7 +497,7 @@ function LeavePanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn }) 
       return;
     }
     const n = Math.max(1, Math.min(30, Number(days) || 1));
-    consume("leaves", (s) => ({
+    if (!consume("leaves", (s) => ({
       ...s,
       leaves: [
         ...s.leaves,
@@ -511,7 +511,7 @@ function LeavePanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn }) 
           reason: reason.trim(),
         },
       ],
-    }));
+    }))) return;
     setReason("");
     toast.success("✅ Leave request submitted — HR approval ke liye pending.");
   }
@@ -624,7 +624,7 @@ function ReceiptsPanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn 
       return;
     }
     const employee = demo.employees[demo.payslips.length % demo.employees.length]!;
-    consume("receipts", (s) => ({
+    if (!consume("receipts", (s) => ({
       ...s,
       payslips: [
         ...s.payslips,
@@ -634,7 +634,7 @@ function ReceiptsPanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn 
           return { id: uid(), employeeName: employee.name, month: monthLabel(), gross, deductions, net: gross - deductions };
         })(),
       ],
-    }));
+    }))) return;
     toast.success("Payroll run complete — payslip receipt ready.");
   }
 
@@ -686,7 +686,7 @@ function AiPanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn }) {
     if (!question) return;
     const canned = AI_CANNED[thread.filter((m) => m.role === "assistant").length % AI_CANNED.length]!;
     const answer = canned.a.replace("{n}", String(demo.employees.length));
-    consume("ai", (s) => s);
+    if (!consume("ai", (s) => s)) return;
     setThread((t) => [...t, { role: "user", content: question }, { role: "assistant", content: answer }]);
     setText("");
   }
