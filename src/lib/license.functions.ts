@@ -251,7 +251,7 @@ export const superAdminGenerateLicense = createServerFn({ method: "POST" })
       if (error || !created) throw new Error("Could not generate the license key");
 
       await writeAudit(supabaseAdmin, {
-        actorId: actor === OWNER_EMAIL ? "00000000-0000-0000-0000-000000000000" : "00000000-0000-0000-0000-000000000000",
+        actorId: "00000000-0000-0000-0000-000000000000",
         actorEmail: actor,
         action: "license.generate",
         entity: "workspace_license",
