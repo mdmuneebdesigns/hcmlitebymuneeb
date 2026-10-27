@@ -370,9 +370,14 @@ export function LandingPage() {
           <p className="flex items-center gap-2 text-xs text-muted-foreground">
             <Activity className="h-3.5 w-3.5" /> AI-Powered HR, Biometric Attendance &amp; Payroll
           </p>
-          <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/auth" })}>
-            Sign In
-          </Button>
+          <div className="flex items-center gap-3">
+            <a href="#enterprise" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
+              💼 Book Enterprise Demo
+            </a>
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/auth" })}>
+              Sign In
+            </Button>
+          </div>
         </div>
       </footer>
     </div>
