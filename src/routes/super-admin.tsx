@@ -347,16 +347,16 @@ function SuperAdminPage() {
                       <Button size="sm" variant="outline" onClick={() => void handleCopyKey(lastGenerated.key)}>
                         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} Copy
                       </Button>
-                      <Button size="sm" asChild variant="outline">
+                      <Button size="sm" asChild variant="outline" className="border-emerald-600/40 text-emerald-700 dark:text-emerald-400">
                         <a
                           href={whatsappLink(
-                            WHATSAPP_PK,
-                            `Assalam o Alaikum! Aapki HCM Lite license key: ${lastGenerated.key} (${PLAN_LABELS[lastGenerated.plan]}). Isay /setup par activate karein — 1 device lock applied.`,
+                            genPhone.replace(/[^0-9]/g, "") || WHATSAPP_PK,
+                            `Assalam o Alaikum ${genName.trim() || ""}! Aapki HCM Lite license key: ${lastGenerated.key} (${PLAN_LABELS[lastGenerated.plan]}). Isay https://hcmlitebymuneeb.lovable.app/setup par activate karein — 1 device lock applied. Koi masla ho to WhatsApp par rabta karein.`,
                           )}
                           target="_blank"
                           rel="noreferrer"
                         >
-                          <MessageCircle className="h-4 w-4" /> Send on WhatsApp
+                          <MessageCircle className="h-4 w-4" /> Auto-Send on WhatsApp
                         </a>
                       </Button>
                     </div>
