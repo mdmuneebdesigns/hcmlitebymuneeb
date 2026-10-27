@@ -142,3 +142,13 @@
     color: var(--color-foreground);
   }
 }
+
+/* Hide any platform badge/attribution widget entirely (parent included,
+   so no empty box or orphaned close button can appear). */
+#lovable-badge,
+#lovable-badge * {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}

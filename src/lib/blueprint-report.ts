@@ -52,7 +52,7 @@ export const BLUEPRINT_SECTIONS: BlueprintSection[] = [
           { k: "Project", v: "HCM Lite — AI-assisted HCM (Saylani Hackathon)" },
           { k: "Roles", v: "Admin, HR, Employee (protected user_roles table)" },
           { k: "Modules", v: "Setup, Auth, Org, Employees, Attendance, Leave, Payroll, Dashboards, AI Assistant, Comms & Audit" },
-          { k: "Platform", v: "Lovable Cloud (PostgreSQL + Auth + RLS) — TanStack Start edge deployment" },
+          { k: "Platform", v: "Managed Cloud (PostgreSQL + Auth + RLS) — TanStack Start edge deployment" },
         ],
       },
     ],
@@ -78,7 +78,7 @@ export const BLUEPRINT_SECTIONS: BlueprintSection[] = [
           { k: "recharts", v: "Dashboard charts (donut, bar, trend lines) — React ke sath declarative." },
           { k: "@supabase/supabase-js", v: "PostgreSQL + Auth client — Row-Level Security ke sath database access." },
           { k: "pdf-lib", v: "Server-side PDF generation (payslips, blueprint report) — zero external service, kuch bhi third-party API par nahi jata." },
-          { k: "@lovable.dev/ai-gateway", v: "AI gateway client — chat, tool-calling; API key sirf server par rehti hai." },
+          { k: "AI Gateway SDK", v: "AI gateway client — chat, tool-calling; API key sirf server par rehti hai." },
           { k: "sonner", v: "Toast notifications." },
           { k: "zod + react-hook-form + @hookform/resolvers", v: "Form state aur runtime validation — galat data server tak jata hi nahi." },
           { k: "date-fns", v: "Date math (working days, month ranges)." },
@@ -183,7 +183,7 @@ export const BLUEPRINT_SECTIONS: BlueprintSection[] = [
       {
         kind: "bullets",
         items: [
-          "Email/password auth Supabase Auth (Lovable Cloud) ke through; session JWT browser me safe store hota hai.",
+          "Email/password auth managed Auth service ke through; session JWT browser me safe store hota hai.",
           "Har server fn par requireSupabaseAuth middleware JWT verify karta hai; protected pages _authenticated layout guard se guzarti hain.",
           "Roles user-editable metadata se NAHI aate — protected user_roles table me rows hoti hain aur has_role() security-definer SQL function check karta hai (RLS recursion se bachne ke liye).",
           "Row-Level Security (RLS) har public table par enabled hai: employee sirf apne rows, HR org data, Admin sab — database level par enforce, sirf UI par nahi.",
@@ -229,11 +229,11 @@ export const BLUEPRINT_SECTIONS: BlueprintSection[] = [
   },
   {
     num: 6,
-    title: "Database Architecture & Deployment (Lovable Cloud PostgreSQL)",
+    title: "Database Architecture & Deployment (Managed PostgreSQL)",
     blocks: [
       {
         kind: "p",
-        text: "Database Lovable Cloud (managed PostgreSQL + Supabase Auth) par hosted hai. PostgreSQL is liye chuna: Row-Level Security database level par roles enforce karta hai, transactions aur unique constraints data integrity dete hain, aur complex aggregation queries (dashboard KPIs) SQL me efficient hain. 16 tables:",
+        text: "Database managed cloud PostgreSQL + managed Auth service par hosted hai. PostgreSQL is liye chuna: Row-Level Security database level par roles enforce karta hai, transactions aur unique constraints data integrity dete hain, aur complex aggregation queries (dashboard KPIs) SQL me efficient hain. 16 tables:",
       },
       {
         kind: "bullets",
@@ -353,7 +353,7 @@ export const BLUEPRINT_SECTIONS: BlueprintSection[] = [
       {
         kind: "bullets",
         items: [
-          "Gateway + model: @lovable.dev/ai-gateway (chat completions + tool calling), model openai/gpt-6-astra. API key (LOVABLE_API_KEY) sirf server environment me — browser me kabhi expose nahi hoti.",
+          "Gateway + model: managed AI gateway (chat completions + tool calling), model openai/gpt-6-astra. API key sirf server environment me — browser me kabhi expose nahi hoti.",
           "Integration sirf src/lib/ai.functions.ts me hota hai; role-scoping tools src/lib/ai.tools.server.ts (AI_TOOLS) me defined hain.",
           "Floating chat panel (sab logged-in pages) + KPI Summarizer (/dashboards) + Smart Leave pre-fill (/leaves).",
           "Har call ai_logs table me log hoti hai (model, user, tools, tokens, latency) — audit + cost control.",
