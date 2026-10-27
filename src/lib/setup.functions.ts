@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // ---------- Types (client-safe) ----------
 export interface FirstRunStatus {
@@ -17,8 +18,6 @@ interface SetupInput {
   officeLng: number;
   geofenceRadiusM: number;
   adminFullName: string;
-  adminEmail: string;
-  adminPassword: string;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,16 +36,13 @@ function validateSetup(input: Partial<SetupInput>): SetupInput {
   if (typeof input.officeLng !== "number" || input.officeLng < -180 || input.officeLng > 180) errors.push("Office longitude is invalid");
   if (typeof input.geofenceRadiusM !== "number" || input.geofenceRadiusM < 10 || input.geofenceRadiusM > 10000) errors.push("Geofence radius must be 10–10000 m");
   if (!input.adminFullName || input.adminFullName.trim().length < 2) errors.push("Admin name is required");
-  if (!input.adminEmail || !EMAIL_RE.test(input.adminEmail)) errors.push("Admin email is invalid");
-  if (!input.adminPassword || input.adminPassword.length < 8) errors.push("Admin password must be at least 8 characters");
   if (errors.length > 0) throw new Error(errors[0]);
   return input as SetupInput;
 }
 
-// ---------- Public (unauthenticated) server functions ----------
-// These power the first-run wizard. The handler itself verifies that the
-// database is still empty, so the endpoint can only ever run once.
-
+// ---------- Public (unauthenticated) server function ----------
+// Read-only status check used by the landing/auth surfaces to decide whether
+// sign-up is still possible (fresh install) — reveals nothing else.
 export const getFirstRunStatus = createServerFn({ method: "GET" }).handler(async (): Promise<FirstRunStatus> => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { count, error } = await supabaseAdmin.from("companies").select("id", { count: "exact", head: true });
@@ -54,9 +50,15 @@ export const getFirstRunStatus = createServerFn({ method: "GET" }).handler(async
   return { companyExists: (count ?? 0) > 0 };
 });
 
+// ---------- Setup completion (authenticated) ----------
+// The caller must be signed in (the /auth sign-up tab exists only on a fresh
+// install). The signed-in account is promoted to Admin — no passwords are
+// ever accepted or stored here.
 export const completeFirstRunSetup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: Partial<SetupInput>) => validateSetup(input))
-  .handler(async ({ data }): Promise<SetupResult> => {
+  .handler(async ({ context, data }): Promise<SetupResult> => {
+    const { supabase, userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Guard: the wizard can only run on a fresh install.
@@ -65,24 +67,20 @@ export const completeFirstRunSetup = createServerFn({ method: "POST" })
       return { ok: false, error: "Setup already completed. Please sign in instead." };
     }
 
-    // 1. Create the Admin auth account (confirmed immediately — HR-created logins only).
-    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: data.adminEmail,
-      password: data.adminPassword,
-      email_confirm: true,
-      user_metadata: { full_name: data.adminFullName },
-    });
-    if (createError || !created.user) {
-      return { ok: false, error: createError?.message ?? "Could not create the Admin account" };
+    // Resolve the caller's email from their session (never from input).
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const email = userData.user?.email ?? "";
+    if (userError || !EMAIL_RE.test(email)) {
+      return { ok: false, error: "Your account has no valid email — please sign in again" };
     }
 
-    // 2. Assign the admin role.
+    // 1. Assign the admin role to the signed-in account.
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: created.user.id, role: "admin" });
+      .insert({ user_id: userId, role: "admin" });
     if (roleError) return { ok: false, error: "Could not assign the Admin role" };
 
-    // 3. Create the company with its org rules and geofence.
+    // 2. Create the company with its org rules and geofence.
     const { data: company, error: companyError } = await supabaseAdmin
       .from("companies")
       .insert({
@@ -100,7 +98,7 @@ export const completeFirstRunSetup = createServerFn({ method: "POST" })
       .single();
     if (companyError || !company) return { ok: false, error: "Could not create the company profile" };
 
-    // 4. Seed the standard leave types (org config, not demo data).
+    // 3. Seed the standard leave types (org config, not demo data).
     const { error: ltError } = await supabaseAdmin.from("leave_types").insert([
       { name: "Annual", annual_quota: 14, is_paid: true },
       { name: "Sick", annual_quota: 8, is_paid: true },
@@ -109,18 +107,17 @@ export const completeFirstRunSetup = createServerFn({ method: "POST" })
     ]);
     if (ltError) return { ok: false, error: "Company created but leave types could not be seeded" };
 
-    // 5. Audit log.
+    // 4. Audit log.
     await supabaseAdmin.from("audit_logs").insert([
       {
-        actor_id: created.user.id,
-        actor_email: data.adminEmail,
+        actor_id: userId,
+        actor_email: email,
         action: "company.create",
         entity: "company",
         entity_id: company.id,
         after_json: { name: data.companyName, office_start: data.officeStart, geofence_radius_m: data.geofenceRadiusM },
       },
-      { actor_id: created.user.id, actor_email: data.adminEmail, action: "user.create", entity: "auth_user", entity_id: created.user.id },
-      { actor_id: created.user.id, actor_email: data.adminEmail, action: "role.assign", entity: "user_role", entity_id: created.user.id, after_json: { role: "admin" } },
+      { actor_id: userId, actor_email: email, action: "role.assign", entity: "user_role", entity_id: userId, after_json: { role: "admin" } },
     ]);
 
     return { ok: true };
