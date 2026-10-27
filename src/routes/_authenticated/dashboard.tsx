@@ -17,6 +17,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BrandLogo } from "@/components/brand-logo";
 import { getMe, type Me } from "@/lib/auth.functions";
 import { wipeAllData } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +42,9 @@ function DashboardPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [companyName, setCompanyName] = useState<string | null>(null);
+  // The wipe confirmation requires the Admin to type RESET exactly.
+  const [wipeConfirm, setWipeConfirm] = useState("");
+  const [wiping, setWiping] = useState(false);
 
   useEffect(() => {
     supabase
@@ -76,9 +82,7 @@ function DashboardPage() {
       <header className="border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Building2 className="h-4 w-4" />
-            </div>
+            <BrandLogo size={32} />
             <div>
               <span className="text-sm font-semibold text-foreground">HCM Lite</span>
               {companyName ? <span className="ml-2 text-xs text-muted-foreground">{companyName}</span> : null}
@@ -186,7 +190,7 @@ function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 Wipes every record and account and restarts the first-run wizard. Use before judging.
               </p>
-              <AlertDialog>
+              <AlertDialog onOpenChange={(open) => !open && setWipeConfirm("")}>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
                     <RefreshCcw className="h-4 w-4" /> Wipe database
@@ -199,9 +203,28 @@ function DashboardPage() {
                       This permanently deletes the company, all employees, attendance, leave, payroll and accounts. You will be returned to the first-run setup wizard.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
+                  <div className="space-y-2">
+                    <Label htmlFor="wipe-confirm">
+                      Type <span className="font-mono font-bold">RESET</span> to confirm
+                    </Label>
+                    <Input
+                      id="wipe-confirm"
+                      value={wipeConfirm}
+                      onChange={(e) => setWipeConfirm(e.target.value)}
+                      placeholder="RESET"
+                      autoComplete="off"
+                    />
+                  </div>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleWipe}>Yes, wipe database</AlertDialogAction>
+                    <AlertDialogAction
+                      onClick={handleWipe}
+                      disabled={wipeConfirm !== "RESET" || wiping}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {wiping ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      Yes, wipe database
+                    </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
