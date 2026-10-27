@@ -70,7 +70,7 @@ export const BLUEPRINT_SECTIONS: BlueprintSection[] = [
         rows: [
           { k: "react 19 + react-dom", v: "UI framework. Hooks-based components; concurrent rendering ke sath fast UI." },
           { k: "@tanstack/react-start + react-router + router-plugin", v: "Fullstack React framework: file-based routing, SSR/prerender, aur createServerFn ke through backend API — alag Express server ki zaroorat hi nahi." },
-          { k: "@tanstack/react-query", v "": "", k2: "" } as unknown as { k: string; v: string },
+          { k: "@tanstack/react-query", v: "Data fetching + caching layer — loading/error states, background refetch, cache invalidation." },
           { k: "vite 8 + @vitejs/plugin-react", v: "Build tool — millisecond HMR aur fast production builds." },
           { k: "Tailwind CSS v4", v: "Utility-first styling; design tokens (semantic colors) isliye dark mode automatically har component par kaam karta hai." },
           { k: "shadcn/ui + @radix-ui/*", v: "Accessible, unstyled primitives (dialog, dropdown, tabs...) — keyboard/screen-reader support free, copy-paste ownership ke sath." },
