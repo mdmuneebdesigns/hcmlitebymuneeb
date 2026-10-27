@@ -39,6 +39,7 @@ import { pageMeta } from "@/lib/seo";
 import { PLAN_LABELS, WHATSAPP_PK, WHATSAPP_US, formatDaysLeft, whatsappLink, type LicensePlan } from "@/lib/license";
 import {
   superAdminApproveLead,
+  superAdminBanCompany,
   superAdminGenerateLicense,
   superAdminLicenseAction,
   superAdminListAudit,

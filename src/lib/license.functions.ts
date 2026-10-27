@@ -235,7 +235,7 @@ export const superAdminGenerateLicense = createServerFn({ method: "POST" })
     // Retry on the (very unlikely) unique-key collision.
     for (let attempt = 0; attempt < 5; attempt++) {
       const key = generateLicenseKey(data.plan);
-      const expiresAt = expiryForPlan(data.plan);
+      const expiresAtIso = data.plan === "lifetime" ? null : (expiryForPlan(data.plan)?.toISOString() ?? null);
       const { data: created, error } = await supabaseAdmin
         .from("workspace_licenses")
         .insert({
@@ -245,7 +245,7 @@ export const superAdminGenerateLicense = createServerFn({ method: "POST" })
           assigned_email: data.clientEmail,
           assigned_company_name: data.clientCompany || null,
           max_devices: 1,
-          expires_at: data.plan === "lifetime" ? null : expiresAt,
+          expires_at: expiresAtIso,
         })
         .select("license_key, plan_type, expires_at")
         .single();
@@ -258,7 +258,7 @@ export const superAdminGenerateLicense = createServerFn({ method: "POST" })
         action: "license.generate",
         entity: "workspace_license",
         entityId: key,
-        after: { plan: data.plan, client: data.clientEmail, expires_at: data.plan === "lifetime" ? null : expiresAt },
+        after: { plan: data.plan, client: data.clientEmail, expires_at: expiresAtIso },
       });
 
       return {
@@ -525,7 +525,7 @@ export const superAdminApproveLead = createServerFn({ method: "POST" })
     if (!lead) return { ok: false, error: "Lead not found", key: "", plan: data.plan, expiresAt: null };
 
     const key = generateLicenseKey(data.plan);
-    const expiresAt = expiryForPlan(data.plan);
+    const expiresAtIso = data.plan === "lifetime" ? null : (expiryForPlan(data.plan)?.toISOString() ?? null);
     const { data: created, error } = await supabaseAdmin
       .from("workspace_licenses")
       .insert({
@@ -535,7 +535,7 @@ export const superAdminApproveLead = createServerFn({ method: "POST" })
         assigned_email: lead.email,
         assigned_company_name: lead.company_name,
         max_devices: 1,
-        expires_at: data.plan === "lifetime" ? null : expiresAt,
+        expires_at: expiresAtIso,
       })
       .select("license_key, plan_type, expires_at")
       .single();
