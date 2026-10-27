@@ -21,7 +21,11 @@ describe("demo quota rules", () => {
 
   it("blocks the 6th action without mutating state", () => {
     let state = newDemoState();
-    for (let i = 0; i < DEMO_QUOTA_LIMIT; i++) state = consumeQuota(state, "ai").ok ? (consumeQuota(state, "ai") as { ok: true; state: typeof state }).state : state;
+    for (let i = 0; i < DEMO_QUOTA_LIMIT; i++) {
+      const result = consumeQuota(state, "ai");
+      expect(result.ok).toBe(true);
+      state = (result as { ok: true; state: typeof state }).state;
+    }
     const blocked = consumeQuota(state, "ai");
     expect(blocked.ok).toBe(false);
     expect(blocked.state.quotas.ai).toBe(DEMO_QUOTA_LIMIT);

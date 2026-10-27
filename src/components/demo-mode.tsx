@@ -39,6 +39,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const DEMO_OPEN_EVENT = "hcm-demo-open";
 
+type ConsumeFn = (key: DemoQuotaKey, apply?: (s: DemoState) => DemoState) => boolean;
+
 /** Start (or resume) the interactive demo — call from any CTA on public pages. */
 export function startDemoMode(): void {
   if (typeof window === "undefined") return;
