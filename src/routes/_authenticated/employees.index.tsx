@@ -51,6 +51,13 @@ import { getOrgData } from "@/lib/org.functions";
 import { StatusBadge } from "@/components/status-badge";
 
 export const Route = createFileRoute("/_authenticated/employees/")({
+  head: () => ({
+    meta: [
+      { title: "Employee Directory — HCM Lite" },
+      { name: "description", content: "Search, filter and manage employee records, departments and designations." },
+    ],
+  }),
+  staticData: { sitemap: false },
 
   loader: async () => {
     const me = await getMe();

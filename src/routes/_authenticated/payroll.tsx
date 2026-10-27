@@ -33,6 +33,7 @@ import {
 } from "@/lib/payroll.functions";
 
 export const Route = createFileRoute("/_authenticated/payroll")({
+  staticData: { sitemap: false },
   loader: () => getMe(),
   component: PayrollPage,
   head: () => ({

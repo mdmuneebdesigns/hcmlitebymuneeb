@@ -50,6 +50,13 @@ import { haversineMeters, pktStamp } from "@/lib/rules/attendance-rules";
 import { StatusBadge } from "@/components/status-badge";
 
 export const Route = createFileRoute("/_authenticated/attendance")({
+  head: () => ({
+    meta: [
+      { title: "Attendance — HCM Lite" },
+      { name: "description", content: "Camera check-in/out with GPS geofence, attendance corrections and monthly history." },
+    ],
+  }),
+  staticData: { sitemap: false },
   loader: () => getMe(),
   component: AttendancePage,
 });

@@ -42,6 +42,13 @@ import {
 import { getRealUserLocation } from "@/lib/geo";
 
 export const Route = createFileRoute("/_authenticated/org")({
+  head: () => ({
+    meta: [
+      { title: "Organization Settings — HCM Lite" },
+      { name: "description", content: "Company profile, office hours, grace rules, weekend days and GPS geofence configuration." },
+    ],
+  }),
+  staticData: { sitemap: false },
   loader: async () => {
     const me = await getMe();
     if (!me.roles.includes("admin")) throw redirect({ to: "/dashboard" });

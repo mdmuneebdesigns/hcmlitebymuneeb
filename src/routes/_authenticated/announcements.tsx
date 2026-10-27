@@ -12,6 +12,7 @@ import { getMe, type Me } from "@/lib/auth.functions";
 import { createAnnouncement, listAnnouncements, type AnnouncementDto } from "@/lib/comms.functions";
 
 export const Route = createFileRoute("/_authenticated/announcements")({
+  staticData: { sitemap: false },
   loader: () => getMe(),
   component: AnnouncementsPage,
   head: () => ({
