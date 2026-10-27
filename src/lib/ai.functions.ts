@@ -387,7 +387,8 @@ export const siteChat = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<{ reply: string; aiGenerated: true }> => {
     const { getRequestHeader } = await import("@tanstack/react-start/server");
-    const ip = (getRequestHeader("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+    const forwarded = getRequestHeader("x-forwarded-for") ?? "";
+    const ip = (forwarded ? forwarded.split(",")[0].trim() : "") || "unknown";
     if (rateLimited(`site:${ip}`)) {
       return { reply: "You are sending messages too quickly — please wait a minute and try again.", aiGenerated: true };
     }
