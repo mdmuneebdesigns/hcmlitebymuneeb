@@ -30,9 +30,17 @@ export function initialTheme(): "light" | "dark" {
 
 /**
  * Fixed circular dark/light toggle. Rendered once in the root route so it is
- * available on every page, including /auth and /setup.
+ * available on every page, including /auth and /setup. With `floating={false}`
+ * it renders inline (e.g. inside the landing navbar) — applyTheme remains the
+ * single theme-writing code path.
  */
-export function ThemeToggle() {
+export function ThemeToggle({
+  floating = true,
+  className,
+}: {
+  floating?: boolean;
+  className?: string;
+}) {
   const [mounted, setMounted] = useState(false);
   const [dark, setDark] = useState(false);
 
@@ -54,7 +62,12 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
       title={dark ? "Light mode" : "Dark mode"}
-      className="fixed bottom-5 left-5 z-50 rounded-full bg-background shadow print:hidden"
+      className={cn(
+        "rounded-full bg-background shadow",
+        floating && "fixed bottom-5 left-5 z-50",
+        floating && "print:hidden",
+        className,
+      )}
     >
       {mounted && dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </Button>
