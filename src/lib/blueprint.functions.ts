@@ -115,7 +115,7 @@ async function buildBlueprintPdf(): Promise<Uint8Array> {
     "Document: Technical Architecture, Analysis & System Blueprint (A-to-Z)",
     `Generated: ${now} (Pakistan Standard Time)`,
     "App: HCM Lite — AI-assisted Human Capital Management (Saylani Hackathon)",
-    "Stack: TanStack Start (React 19) + Lovable Cloud (PostgreSQL/Auth/RLS) + Lovable AI Gateway",
+    "Stack: TanStack Start (React 19) + Managed Cloud (PostgreSQL/Auth/RLS) + AI Gateway",
     "This PDF is generated server-side with pdf-lib — no external service involved.",
   ]) {
     for (const l of wrap(line, font, 10, CW)) {

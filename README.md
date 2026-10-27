@@ -6,11 +6,11 @@ attendance, leave, payroll, analytics, audit trail and a role-scoped AI assistan
 ## Tech stack
 
 - **Frontend + backend:** TanStack Start v1 (React 19, Vite 7, server functions) — deploys as edge functions
-- **Database + auth:** Lovable Cloud (Postgres with Row-Level Security, email/password auth)
+- **Database + auth:** Managed cloud Postgres with Row-Level Security, email/password auth
 - **Styling:** Tailwind CSS v4 + shadcn/ui, dark-mode-ready semantic tokens
 - **Charts:** Recharts
 - **PDF payslips:** pdf-lib (generated server-side, zero external service)
-- **AI:** Lovable AI Gateway (`@lovable.dev/ai-gateway`) — chat assistant, KPI summarizer,
+- **AI:** Managed AI Gateway — chat assistant, KPI summarizer,
   smart leave pre-fill (English + Roman Urdu), grounded policy Q&A
 
 ## Modules
@@ -66,7 +66,7 @@ attendance, leave, payroll, analytics, audit trail and a role-scoped AI assistan
 
 ## Environment
 
-All configuration is supplied by the Lovable Cloud integration
+All configuration is supplied by the hosting integration
 (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`); no manual
 `.env` is needed. The AI assistant reads its gateway key from the server environment
 (`LOVABLE_API_KEY`) — it is never exposed to the browser.
