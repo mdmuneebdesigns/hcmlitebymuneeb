@@ -107,9 +107,39 @@ function SetupPage() {
     }
   }
 
+  /** Validate the license key against the server (no claim yet). */
+  async function validateLicense() {
+    if (!licenseKey.trim()) {
+      setLicenseError("Enter your license key");
+      return;
+    }
+    setValidating(true);
+    setLicenseError(null);
+    try {
+      const result = await validateLicenseKey({ data: { licenseKey: licenseKey.trim(), deviceHash: device?.hash ?? null } });
+      if (!result.ok) {
+        setLicensePlan(null);
+        setLicenseError(result.error ?? "This license key is not valid");
+      } else {
+        setLicensePlan(result.master ? "master" : result.plan ?? null);
+        setLicenseError(null);
+        toast.success(result.master ? "Owner master key accepted" : "License verified — ready to activate");
+      }
+    } catch (err) {
+      setLicensePlan(null);
+      setLicenseError(err instanceof Error ? err.message : "License check failed");
+    } finally {
+      setValidating(false);
+    }
+  }
+
   function validateStep1(): boolean {
     if (companyName.trim().length < 2) {
       toast.error("Enter the company name");
+      return false;
+    }
+    if (!licensePlan) {
+      toast.error("Validate your license key first");
       return false;
     }
     if (weekendDays.length === 0) {
@@ -143,6 +173,9 @@ function SetupPage() {
           officeLng: Number(officeLng),
           geofenceRadiusM: radius,
           adminFullName: adminFullName.trim(),
+          licenseKey: licenseKey.trim(),
+          deviceHash: device?.hash ?? null,
+          deviceInfo: device?.info ?? null,
         },
       });
       if (!result.ok) {
