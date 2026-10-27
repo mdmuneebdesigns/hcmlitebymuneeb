@@ -81,9 +81,10 @@ function AuthPage() {
 
   // Already signed in? Go straight to the intended destination.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (data.session) {
-        navigate({ href: redirectTarget ?? "/dashboard", replace: true });
+        const allowed = await verifyDeviceLock();
+        if (allowed) navigate({ href: redirectTarget ?? "/dashboard", replace: true });
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -104,6 +105,12 @@ function AuthPage() {
       return;
     }
     try {
+      // 1-device license lock: block second devices before anything loads.
+      const allowed = await verifyDeviceLock();
+      if (!allowed) {
+        setLoading(false);
+        return;
+      }
       const me = await getMe();
       navigate({ href: signedInDestination(me.mustChangePassword), replace: true });
     } catch {
