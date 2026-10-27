@@ -7,6 +7,7 @@ export interface FirstRunStatus {
 }
 
 export type SetupResult = { ok: true } | { ok: false; error: string };
+export type ProvisionResult = { ok: true } | { ok: false; error: string };
 
 interface SetupInput {
   companyName: string;
@@ -50,10 +51,60 @@ export const getFirstRunStatus = createServerFn({ method: "GET" }).handler(async
   return { companyExists: (count ?? 0) > 0 };
 });
 
+// ---------- First-run account provisioning (public, fresh-install only) ----------
+// The handler itself verifies the workspace is still empty, so this can only
+// ever run before the first company exists. The account is created confirmed
+// (same as the original setup wizard) so the visitor is signed in instantly
+// and routed to /setup — no email-verification round trip during judging.
+export const provisionFirstAdmin = createServerFn({ method: "POST" })
+  .inputValidator((input: { adminFullName?: string; adminEmail?: string; adminPassword?: string }) => {
+    const fullName = (input.adminFullName ?? "").trim();
+    const email = (input.adminEmail ?? "").trim().toLowerCase();
+    const password = input.adminPassword ?? "";
+    if (fullName.length < 2) throw new Error("Admin name is required");
+    if (!EMAIL_RE.test(email)) throw new Error("A valid email is required");
+    if (password.length < 8) throw new Error("Password must be at least 8 characters");
+    return { adminFullName: fullName, adminEmail: email, adminPassword: password };
+  })
+  .handler(async ({ data }): Promise<ProvisionResult> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Guard: only on a fresh install.
+    const { count } = await supabaseAdmin.from("companies").select("id", { count: "exact", head: true });
+    if ((count ?? 0) > 0) {
+      return { ok: false, error: "Setup already completed. Please sign in instead." };
+    }
+
+    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email: data.adminEmail,
+      password: data.adminPassword,
+      email_confirm: true,
+      user_metadata: { full_name: data.adminFullName },
+    });
+    if (createError || !created.user) {
+      return { ok: false, error: createError?.message ?? "Could not create the account" };
+    }
+
+    const { error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .upsert({ user_id: created.user.id, role: "admin" }, { onConflict: "user_id,role", ignoreDuplicates: true });
+    if (roleError) return { ok: false, error: "Could not assign the Admin role" };
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: created.user.id,
+      actor_email: data.adminEmail,
+      action: "user.create",
+      entity: "auth_user",
+      entity_id: created.user.id,
+      after_json: { source: "signup", provisional_admin: true },
+    });
+
+    return { ok: true };
+  });
+
 // ---------- Setup completion (authenticated) ----------
-// The caller must be signed in (the /auth sign-up tab exists only on a fresh
-// install). The signed-in account is promoted to Admin — no passwords are
-// ever accepted or stored here.
+// The caller must be signed in. Their account becomes (or already is) the
+// workspace Admin — no passwords are ever accepted or stored here.
 export const completeFirstRunSetup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: Partial<SetupInput>) => validateSetup(input))
@@ -74,10 +125,10 @@ export const completeFirstRunSetup = createServerFn({ method: "POST" })
       return { ok: false, error: "Your account has no valid email — please sign in again" };
     }
 
-    // 1. Assign the admin role to the signed-in account.
+    // 1. Ensure the admin role on the signed-in account (idempotent).
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: userId, role: "admin" });
+      .upsert({ user_id: userId, role: "admin" }, { onConflict: "user_id,role", ignoreDuplicates: true });
     if (roleError) return { ok: false, error: "Could not assign the Admin role" };
 
     // 2. Create the company with its org rules and geofence.
