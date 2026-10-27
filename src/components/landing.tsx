@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { EnterpriseDemoSection, HcmFaqSection } from "@/components/landing-extras";
 import { supabase } from "@/integrations/supabase/client";
 
 const NAV_LINKS = [
@@ -32,6 +33,8 @@ const NAV_LINKS = [
   { label: "Biometric Attendance", href: "#attendance" },
   { label: "Payroll", href: "#payroll" },
   { label: "Architecture Blueprint", href: "#architecture" },
+  { label: "FAQ", href: "#faq" },
+  { label: "Enterprise Demo", href: "#enterprise" },
 ];
 
 /** Types the Roman-Urdu leave request, then reveals the auto-filled JSON form. */
