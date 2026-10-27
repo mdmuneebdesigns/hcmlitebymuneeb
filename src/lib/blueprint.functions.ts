@@ -92,6 +92,9 @@ async function buildBlueprintPdf(): Promise<Uint8Array> {
 
   // ---------- Cover ----------
   page.drawRectangle({ x: 0, y: H - 210, width: W, height: 210, color: accent });
+  // Brand mark: white squircle with an indigo "H" (vector, drawn with pdf-lib).
+  page.drawRectangle({ x: M, y: H - 64, width: 40, height: 40, color: rgb(1, 1, 1) });
+  page.drawText("H", { x: M + 13, y: H - 51, size: 18, font: bold, color: accent });
   const titleLines = wrap(REPORT_TITLE, bold, 22, CW);
   // PDF y grows upward: draw the first line highest, then step DOWN.
   let ty = H - 90;
