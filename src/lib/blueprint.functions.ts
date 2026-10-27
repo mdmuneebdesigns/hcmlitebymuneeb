@@ -159,17 +159,18 @@ async function buildBlueprintPdf(): Promise<Uint8Array> {
         const h = Math.max(keyLines.length, valLines.length) * 13;
         need(h + 6);
         page.drawRectangle({ x: M - 4, y: y - h + 9, width: CW + 8, height: h + 2, color: rgb(0.97, 0.975, 0.99) });
-        drawLines(keyLines, M, bold, 9.5, 13);
-        y -= (keyLines.length * 13 - Math.max(keyLines.length, valLines.length) * 13) * -1 - 0; // keep aligned
-        y += keyLines.length * 13; // reset to row top
-        y -= 0;
-        // draw value from row top
+        // row top is at y; draw key column then value column
+        let ky = y;
+        for (const l of keyLines) {
+          page.drawText(l, { x: M, y: ky, size: 9.5, font: bold, color: dark });
+          ky -= 13;
+        }
         let vy = y;
         for (const l of valLines) {
           page.drawText(l, { x: M + LK + 14, y: vy, size: 9.5, font, color: muted });
           vy -= 13;
         }
-        y -= Math.max(keyLines.length, valLines.length) * 13 + 4;
+        y -= h + 4;
       }
       return;
     }

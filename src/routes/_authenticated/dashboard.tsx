@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Building2, CalendarCheck2, ChevronRight, Loader2, LogOut, RefreshCcw, ShieldCheck, UserCircle2 } from "lucide-react";
+import { AlertTriangle, Building2, CalendarCheck2, ChevronRight, FileText, Loader2, LogOut, RefreshCcw, ShieldCheck, UserCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -89,6 +89,9 @@ function DashboardPage() {
               {me.roles.includes("admin") ? <ShieldCheck className="h-3 w-3" /> : <UserCircle2 className="h-3 w-3" />}
               {roleLabel(me.roles)}
             </Badge>
+            <Link to="/project-blueprint" className="hidden items-center gap-1.5 text-sm text-foreground hover:underline sm:flex">
+              <FileText className="h-4 w-4" /> Project Blueprint PDF
+            </Link>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="h-4 w-4" /> Sign out
             </Button>
