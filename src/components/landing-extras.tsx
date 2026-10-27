@@ -33,9 +33,11 @@ type Status = "idle" | "sending" | "sent" | "error";
  * “Book an Enterprise Demo & Custom Deployment” section — submissions are
  * delivered straight to the owner's inbox through FormSubmit.co
  * (mdmuneebdesigns@gmail.com), as chosen by the product owner.
+ * Primary path: AJAX fetch. Fallback: classic HTML form POST (spec-required).
  */
 export function EnterpriseDemoSection() {
   const [status, setStatus] = useState<Status>("idle");
+  const formRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
