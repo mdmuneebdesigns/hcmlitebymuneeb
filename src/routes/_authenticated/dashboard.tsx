@@ -62,9 +62,11 @@ function DashboardPage() {
   }
 
   async function handleWipe() {
+    setWiping(true);
     const result = await wipeAllData();
     if (!result.ok) {
       toast.error(result.error);
+      setWiping(false);
       return;
     }
     // The signing account no longer exists; clear state and hard-reload into
