@@ -623,7 +623,7 @@ function ReceiptsPanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn 
       toast.error("Pehle Employees tab se ek employee add karein");
       return;
     }
-    const employee = demo.employees[demo.payslips.length % demo.employees.length];
+    const employee = demo.employees[demo.payslips.length % demo.employees.length]!;
     consume("receipts", (s) => ({
       ...s,
       payslips: [
