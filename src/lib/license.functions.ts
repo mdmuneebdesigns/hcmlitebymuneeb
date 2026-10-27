@@ -4,7 +4,7 @@
 // public.workspace_licenses which is admin-only (RLS deny-all), so everything
 // here goes through supabaseAdmin after the caller is verified.
 
-import { createServerFn, getRequestHeader } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   MASTER_SETUP_KEY,
@@ -55,6 +55,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // security boundary.
 async function assertSuperAdmin(pin?: string): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  // Kept out of the client graph via dynamic import (handler-only server API).
+  const { getRequestHeader } = await import("@tanstack/react-start/server");
   const auth = getRequestHeader("authorization");
   if (typeof auth === "string" && auth.startsWith("Bearer ")) {
     const jwt = auth.slice(7).trim();
@@ -74,7 +76,7 @@ async function assertSuperAdmin(pin?: string): Promise<string> {
 // binding happens atomically inside completeFirstRunSetup.
 export const validateLicenseKey = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { licenseKey?: string; deviceHash?: string }) => {
+  .inputValidator((input: { licenseKey?: string; deviceHash?: string | null }) => {
     return { licenseKey: (input.licenseKey ?? "").trim().toUpperCase(), deviceHash: input.deviceHash ?? null };
   })
   .handler(async ({ data }): Promise<LicenseCheckResult> => {
@@ -122,7 +124,7 @@ export const validateLicenseKey = createServerFn({ method: "POST" })
 // ---------- 1-device lock check (authenticated; called after sign-in) ----------
 export const checkDeviceLock = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { deviceHash?: string; deviceInfo?: string }) => {
+  .inputValidator((input: { deviceHash?: string | null; deviceInfo?: string | null }) => {
     return { deviceHash: input.deviceHash ?? null, deviceInfo: input.deviceInfo ?? null };
   })
   .handler(async ({ data }): Promise<DeviceLockResult> => {
