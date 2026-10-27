@@ -29,8 +29,12 @@ export const OWNER_EMAIL = "mdmuneebdesigns@gmail.com";
 export const CONTACT_WHATSAPP_URL =
   "https://wa.me/923140263346?text=Hi%20Muneeb,%20I%20tested%20HCM%20Lite%20and%20want%20to%20buy%20a%20license!";
 export const CONTACT_WHATSAPP_DISPLAY = "+92-3140263346";
+/** Pakistani number is also available for voice calls. */
+export const CONTACT_PK_CALL_TEL = "tel:+923140263346";
 export const CONTACT_US_DESK_DISPLAY = "+1 (775) 312-8079";
-export const CONTACT_US_DESK_TEL = "tel:+17753128079";
+/** US desk is WhatsApp-only — no voice calls on the US number. */
+export const CONTACT_US_WHATSAPP_URL =
+  "https://wa.me/17753128079?text=Hi%20Muneeb,%20I%20need%20HCM%20Lite%20help/support.";
 
 export interface LeadInput {
   fullName: string;
