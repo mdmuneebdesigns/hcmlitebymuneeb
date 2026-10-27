@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { EnterpriseDemoSection, HcmFaqSection } from "@/components/landing-extras";
 import { supabase } from "@/integrations/supabase/client";
 
 const NAV_LINKS = [
@@ -32,6 +33,8 @@ const NAV_LINKS = [
   { label: "Biometric Attendance", href: "#attendance" },
   { label: "Payroll", href: "#payroll" },
   { label: "Architecture Blueprint", href: "#architecture" },
+  { label: "FAQ", href: "#faq" },
+  { label: "Enterprise Demo", href: "#enterprise" },
 ];
 
 /** Types the Roman-Urdu leave request, then reveals the auto-filled JSON form. */
@@ -123,6 +126,11 @@ export function LandingPage() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
+            <a href="#enterprise" className="hidden lg:block">
+              <Button variant="outline" size="sm">
+                💼 Book Enterprise Demo
+              </Button>
+            </a>
             <ThemeToggle floating={false} className="relative bottom-auto left-auto" />
             <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/auth" })}>
               Sign In
@@ -134,6 +142,7 @@ export function LandingPage() {
         </div>
       </header>
 
+      <main>
       {/* Hero */}
       <section id="top" className="relative overflow-hidden px-4 py-20 sm:py-28">
         <div
@@ -350,6 +359,10 @@ export function LandingPage() {
         </div>
       </section>
 
+      <HcmFaqSection />
+      <EnterpriseDemoSection />
+      </main>
+
       {/* Footer */}
       <footer className="border-t border-border/60 px-4 py-10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
@@ -357,9 +370,14 @@ export function LandingPage() {
           <p className="flex items-center gap-2 text-xs text-muted-foreground">
             <Activity className="h-3.5 w-3.5" /> AI-Powered HR, Biometric Attendance &amp; Payroll
           </p>
-          <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/auth" })}>
-            Sign In
-          </Button>
+          <div className="flex items-center gap-3">
+            <a href="#enterprise" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
+              💼 Book Enterprise Demo
+            </a>
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/auth" })}>
+              Sign In
+            </Button>
+          </div>
         </div>
       </footer>
     </div>

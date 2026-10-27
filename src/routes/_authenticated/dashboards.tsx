@@ -37,6 +37,7 @@ import { getMyDashboard, getOrgDashboard, type DashboardData } from "@/lib/dashb
 import { summarizeKpis } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboards")({
+  staticData: { sitemap: false },
   loader: () => getMe(),
   component: DashboardsPage,
   head: () => ({

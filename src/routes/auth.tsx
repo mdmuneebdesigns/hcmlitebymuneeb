@@ -11,6 +11,7 @@ import { getMe } from "@/lib/auth.functions";
 import { getFirstRunStatus, provisionFirstAdmin } from "@/lib/setup.functions";
 import { PasswordStrengthChecklist, isPasswordStrong } from "@/components/password-checklist";
 import { BrandLogo } from "@/components/brand-logo";
+import { pageMeta } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
@@ -18,15 +19,14 @@ export const Route = createFileRoute("/auth")({
     const redirect = typeof search["redirect"] === "string" ? search["redirect"] : undefined;
     return redirect ? { redirect } : {};
   },
+  staticData: { sitemap: false },
   head: () => ({
-    meta: [
-      { title: "Sign in — HCM Lite" },
-      { name: "description", content: "Sign in or create your account to start setting up HCM Lite." },
-      { property: "og:title", content: "Sign in — HCM Lite" },
-      { property: "og:description", content: "Sign in or create your account to start setting up HCM Lite." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
+    meta: pageMeta({
+      title: "Sign In to Your HR Workspace | HCM Lite",
+      description: "Role-based portal access for Admin, HR and Employees — sign in or create your HCM Lite account.",
+      path: "/auth",
+      indexable: false,
+    }),
   }),
   component: AuthPage,
 });

@@ -25,6 +25,13 @@ import { wipeAllData } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
+  head: () => ({
+    meta: [
+      { title: "Dashboard — HCM Lite" },
+      { name: "description", content: "Your personal HR workspace: camera check-in, leave balances and company announcements." },
+    ],
+  }),
+  staticData: { sitemap: false },
   loader: () => getMe(),
   component: DashboardPage,
 });

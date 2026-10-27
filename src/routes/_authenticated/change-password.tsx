@@ -11,6 +11,7 @@ import { PasswordStrengthChecklist, isPasswordStrong } from "@/components/passwo
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/change-password")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Change password — HCM Lite" },

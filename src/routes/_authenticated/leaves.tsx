@@ -25,6 +25,7 @@ import {
 import { parseLeaveText, type ParsedLeave } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/_authenticated/leaves")({
+  staticData: { sitemap: false },
   loader: () => getMe(),
   component: LeavesPage,
   head: () => ({

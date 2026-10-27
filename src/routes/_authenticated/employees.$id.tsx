@@ -31,6 +31,13 @@ import { getOrgData } from "@/lib/org.functions";
 import { StatusBadge } from "@/components/status-badge";
 
 export const Route = createFileRoute("/_authenticated/employees/$id")({
+  head: () => ({
+    meta: [
+      { title: "Employee 360 Profile — HCM Lite" },
+      { name: "description", content: "Complete 360 employee view: profile, attendance history, leave requests and payroll records." },
+    ],
+  }),
+  staticData: { sitemap: false },
   component: Employee360Page,
 });
 

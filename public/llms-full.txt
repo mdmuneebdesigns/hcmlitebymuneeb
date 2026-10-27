@@ -1,0 +1,57 @@
+# HCM Lite
+
+> Enterprise-grade, AI-powered Human Capital Management (HCM) suite: biometric camera attendance with GPS geofencing, Pakistani tax-slab payroll with instant PDF payslips, a Roman Urdu + English AI assistant, and immutable audit logs.
+
+HCM Lite is a full-stack HR platform built by **Muhammad Muneeb** — AI Engineer, Data Scientist & Full-Stack Developer (contact: mdmuneebdesigns@gmail.com).
+
+- Live app: https://hcmlitebymuneeb.lovable.app
+- Creator: Muhammad Muneeb (mdmuneebdesigns@gmail.com)
+- License model: SaaS subscription, on-premise / cloud deployment, or white-label source-code acquisition — book via the enterprise demo form on the landing page.
+
+## What HCM Lite does
+
+HCM Lite serves three roles — Admin, HR and Employee — with server-side role enforcement on every request:
+
+- **Employees** check in and out with a live camera frame and GPS verification, request leave (optionally by typing it in Roman Urdu for the AI assistant), and view their own attendance, leave balances and payslips.
+- **HR** manages the employee directory, CSV import/export, attendance corrections, leave approvals, announcements and headcount analytics.
+- **Admin** configures the company, office hours and geofence, creates HR and employee logins with one-time temporary passwords, runs payroll with instant PDF payslips, reads immutable audit logs, and can reset a demo workspace with a typed confirmation ("RESET") guard.
+
+## Key technical innovations
+
+1. **Camera face-detection attendance** — at check-in/out the browser captures a live frame and runs on-device canvas image analysis to confirm face presence; the punch is rejected without it (a skip path exists for unsupported devices and is recorded).
+2. **Multi-stage GPS resolution + Haversine geofence** — the device position resolves through high-accuracy GPS, then Wi-Fi positioning, then IP geolocation, with a configurable default office coordinate fallback so setup never blocks. The Haversine distance between the resolved position and the office coordinates must fall inside the geofence radius.
+3. **Pakistan Standard Time attendance engine** — work dates, late rules (strictly after office start plus grace), half-day thresholds and weekend rules are all computed in Asia/Karachi regardless of device timezone.
+4. **Roman Urdu + English AI assistant** — a role-scoped, tool-calling AI gateway: smart leave parsing auto-fills the request form, HR gets headcount and attendance summaries, Admin gets payroll cost insights. Every call is logged to an ai_logs table with a 15-second timeout and no client-visible secrets.
+5. **Pakistani payroll tax engine** — gross pay is built from basic salary plus 40% house rent and 10% medical allowances; absences, half-days and late penalties are deducted from real attendance; the active progressive income-tax slab is applied; every employee receives a server-generated PDF payslip, and finalized runs are immutable.
+6. **Security architecture** — a 16-table PostgreSQL schema with Row-Level Security enabled on every table, roles stored in a protected user_roles table (never on user profiles), a SECURITY DEFINER role-check function to avoid recursive policies, server-side role verification on every privileged server function, and before/after JSON recorded in immutable audit logs for every privileged write, including deletions.
+
+## FAQ
+
+**How does HCM Lite detect faces and verify the GPS office geofence during check-in?**
+At check-in and check-out the browser captures a live camera frame and runs on-device image analysis to confirm a face is present before the punch is accepted. In parallel, HCM Lite resolves the device position through a multi-stage GPS pipeline (high-accuracy GPS, Wi-Fi positioning, then IP geolocation) and computes the Haversine distance to the configured office coordinates. Punches outside the geofence radius are rejected, and all attendance math runs in Pakistan Standard Time (Asia/Karachi).
+
+**How does the Roman Urdu & English AI Assistant automate leave requests and HR analytics?**
+The assistant is role-scoped: Employees can type a natural request such as "Mujhe Monday aur Tuesday chutti chahiye" and the AI parses it into a pre-filled leave form; HR gets headcount and attendance summaries; Admin gets payroll cost insights. It works through a tool-calling AI gateway with a 15-second timeout, and every call is recorded for full traceability.
+
+**How are Pakistani income tax slabs and attendance deductions calculated in Payroll Lite?**
+Payroll builds gross pay from basic salary plus house rent (40%) and medical (10%) allowances, then deducts absences, half-days and late penalties computed from real attendance records, and finally applies the active progressive income-tax slab on the taxable amount. Every employee gets an instant server-generated PDF payslip, and finalized payroll runs are immutable.
+
+**How does Row-Level Security (RLS) protect employee salary privacy?**
+Every table is RLS-enabled directly in PostgreSQL — salaries and audit trails are isolated per role scope in the database itself, not just the UI. Roles live in a protected user_roles table and every privileged server function re-verifies the caller's role before writing, with before/after JSON recorded in immutable audit logs.
+
+**How can a company book a custom deployment or an enterprise license of HCM Lite?**
+Use the "Book Enterprise Demo / Buy License" form on the landing page or email mdmuneebdesigns@gmail.com directly. Muhammad Muneeb responds within 24 hours to discuss live product demos, SaaS subscriptions, on-premise or cloud deployments, white-label source-code licensing and AI / computer-vision integration consulting.
+
+**Does HCM Lite handle weekends, grace periods and half-days automatically?**
+Yes. Company setup configures office start time, a grace period in minutes, a half-day threshold in hours and weekend days. The attendance engine applies these rules consistently: late marks apply strictly after office start plus grace, checkout below the threshold records a half-day, and weekend rules are respected in every report and payroll deduction.
+
+## Pages
+
+- [Home](/): SaaS landing page — features, architecture overview, FAQ and the enterprise demo booking form.
+- [Welcome tour](/welcome): Shareable tour path for the same landing experience.
+
+## Optional
+
+- [Workspace Setup Wizard](/setup): Company profile, office hours and GPS geofence configuration — requires signing in first.
+- [Sign in](/auth): Role-based Admin / HR / Employee portal access.
+- [Architecture Blueprint](/project-blueprint): Full technical report (schema, RLS, pipelines) — available inside the app after sign-in.

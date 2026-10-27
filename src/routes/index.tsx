@@ -1,26 +1,20 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { LandingPage } from "@/components/landing";
+import { pageMeta, canonicalLink, jsonLdScripts, hcmJsonLdGraph } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
+  staticData: { sitemap: true },
   head: () => ({
-    meta: [
-      { title: "HCM Lite — AI-Powered HR, Biometric Attendance & Payroll" },
-      {
-        name: "description",
-        content:
-          "Enterprise-grade HR suite: camera face-check attendance with GPS geofencing, automated Pakistani tax-slab payroll with PDF payslips, role-scoped AI assistant and immutable audit logs.",
-      },
-      { property: "og:title", content: "HCM Lite — AI-Powered HR, Biometric Attendance & Payroll" },
-      {
-        property: "og:description",
-        content:
-          "Enterprise-grade HR suite: camera face-check attendance with GPS geofencing, automated payroll with PDF payslips, role-scoped AI assistant and immutable audit logs.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
+    meta: pageMeta({
+      title: "HCM Lite — AI-Powered HR, Biometric Geofence Attendance & Payroll System",
+      description:
+        "Enterprise HR suite with webcam face-check attendance, Haversine GPS geofencing, Pakistani tax-slab payroll with PDF payslips, a Roman Urdu + English AI assistant and immutable audit logs.",
+      path: "/",
+    }),
+    links: canonicalLink("/"),
+    scripts: jsonLdScripts(hcmJsonLdGraph()),
   }),
   component: Index,
 });

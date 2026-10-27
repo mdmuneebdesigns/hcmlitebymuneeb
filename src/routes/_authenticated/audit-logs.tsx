@@ -11,6 +11,7 @@ import { getMe, type Me } from "@/lib/auth.functions";
 import { listAuditLogs, type AuditLogDto } from "@/lib/comms.functions";
 
 export const Route = createFileRoute("/_authenticated/audit-logs")({
+  staticData: { sitemap: false },
   loader: () => getMe(),
   component: AuditLogsPage,
   head: () => ({
