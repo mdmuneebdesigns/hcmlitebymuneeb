@@ -19,7 +19,17 @@ export const submitEnterpriseLead = createServerFn({ method: "POST" })
   .inputValidator((input: LeadInput & { _honey?: string }) => {
     // Honeypot: bots fill it, humans never see it — pretend success silently.
     if (typeof input._honey === "string" && input._honey.trim().length > 0) {
-      return { ...validateLead({ fullName: "Bot", email: "bot@example.com", phone: "+9200000000000", companyName: "Bot", message: "bot" }).value as Required<LeadInput>, _bot: true } as Required<LeadInput> & { _bot: boolean };
+      return {
+        fullName: "Bot",
+        email: "bot@example.invalid",
+        phone: "+9200000000000",
+        companyName: "Bot",
+        teamSize: "1–25 Employees",
+        inquiryType: "Bot",
+        selectedPlan: "",
+        message: "Bot submission",
+        _bot: true,
+      } as Required<LeadInput> & { _bot: boolean };
     }
     const result = validateLead(input);
     if (!result.ok) throw new Error(result.error);
