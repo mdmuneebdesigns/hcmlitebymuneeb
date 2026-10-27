@@ -307,7 +307,7 @@ function QuotaModal({ quotaKey, onClose, demoActive }: { quotaKey: DemoQuotaKey 
 
 /* ---------------- Panels ---------------- */
 
-function EmployeesPanel({ demo, consume }: { demo: DemoState; consume: DemoMode["consume"] }) {
+function EmployeesPanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn }) {
   const [name, setName] = useState("");
   const [department, setDepartment] = useState(DEPARTMENTS[0]!);
   const [salary, setSalary] = useState("100000");
@@ -391,7 +391,7 @@ function EmployeesPanel({ demo, consume }: { demo: DemoState; consume: DemoMode[
   );
 }
 
-function AttendancePanel({ demo, consume }: { demo: DemoState; consume: DemoMode["consume"] }) {
+function AttendancePanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn }) {
   const [selected, setSelected] = useState("");
   const employee = demo.employees.find((e) => e.id === selected) ?? demo.employees[0];
 
@@ -480,7 +480,7 @@ function AttendancePanel({ demo, consume }: { demo: DemoState; consume: DemoMode
   );
 }
 
-function LeavePanel({ demo, consume }: { demo: DemoState; consume: DemoMode["consume"] }) {
+function LeavePanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn }) {
   const [type, setType] = useState(LEAVE_TYPES[0]!);
   const [days, setDays] = useState("2");
   const [reason, setReason] = useState("");
@@ -578,7 +578,7 @@ function LeavePanel({ demo, consume }: { demo: DemoState; consume: DemoMode["con
   );
 }
 
-function ReceiptsPanel({ demo, consume }: { demo: DemoState; consume: DemoMode["consume"] }) {
+function ReceiptsPanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn }) {
   async function downloadPayslip(slip: DemoState["payslips"][number]) {
     try {
       const { PDFDocument, StandardFonts } = await import("pdf-lib");
@@ -676,7 +676,7 @@ function ReceiptsPanel({ demo, consume }: { demo: DemoState; consume: DemoMode["
   );
 }
 
-function AiPanel({ demo, consume }: { demo: DemoState; consume: DemoMode["consume"] }) {
+function AiPanel({ demo, consume }: { demo: DemoState; consume: ConsumeFn }) {
   const [text, setText] = useState("");
   const [thread, setThread] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
 
