@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { OWNER_EMAIL } from "@/lib/license";
 
 // ---------- Types (client-safe) ----------
 export interface FirstRunStatus {
