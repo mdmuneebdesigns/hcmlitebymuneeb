@@ -20,6 +20,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BrandLogo } from "@/components/brand-logo";
+import { LicenseLockScreen } from "@/components/license-lock";
+import { checkDeviceLock, type DeviceLockResult } from "@/lib/license.functions";
+import { getDeviceFingerprint } from "@/lib/device";
 import { getMe, type Me } from "@/lib/auth.functions";
 import { wipeAllData } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +55,21 @@ function DashboardPage() {
   // The wipe confirmation requires the Admin to type RESET exactly.
   const [wipeConfirm, setWipeConfirm] = useState("");
   const [wiping, setWiping] = useState(false);
+  // 1-device license lock re-check on every dashboard visit.
+  const [lock, setLock] = useState<DeviceLockResult | null>(null);
+
+  useEffect(() => {
+    getDeviceFingerprint()
+      .then((fp) =>
+        checkDeviceLock({ data: { deviceHash: fp.hash, deviceInfo: fp.info } }).then((result) => {
+          if (result.locked) {
+            return supabase.auth.signOut().then(() => setLock(result));
+          }
+          return undefined;
+        }),
+      )
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     supabase
@@ -85,6 +103,10 @@ function DashboardPage() {
   }
 
   const isEmployee = !me.roles.includes("admin") && !me.roles.includes("hr");
+
+  if (lock) {
+    return <LicenseLockScreen message={lock.message ?? "Access blocked by license security"} />;
+  }
 
   return (
     <div className="min-h-screen bg-background">

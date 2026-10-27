@@ -14,6 +14,9 @@ import { BrandLogo } from "@/components/brand-logo";
 import { pageMeta } from "@/lib/seo";
 import { FloatingWhatsApp } from "@/components/landing-extras";
 import { DemoMode, startDemoMode } from "@/components/demo-mode";
+import { LicenseLockScreen } from "@/components/license-lock";
+import { checkDeviceLock, type DeviceLockResult } from "@/lib/license.functions";
+import { getDeviceFingerprint } from "@/lib/device";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
@@ -55,6 +58,20 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  // Security lock screen state (1-device license lock / expiry / revocation).
+  const [lock, setLock] = useState<DeviceLockResult | null>(null);
+
+  /** Post-sign-in license device check; signs the session out when locked. */
+  async function verifyDeviceLock(): Promise<boolean> {
+    const fp = await getDeviceFingerprint();
+    const result = await checkDeviceLock({ data: { deviceHash: fp.hash, deviceInfo: fp.info } }).catch(() => null);
+    if (result?.locked) {
+      await supabase.auth.signOut();
+      setLock(result);
+      return false;
+    }
+    return true;
+  }
 
   useEffect(() => {
     getFirstRunStatus()
@@ -64,9 +81,10 @@ function AuthPage() {
 
   // Already signed in? Go straight to the intended destination.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (data.session) {
-        navigate({ href: redirectTarget ?? "/dashboard", replace: true });
+        const allowed = await verifyDeviceLock();
+        if (allowed) navigate({ href: redirectTarget ?? "/dashboard", replace: true });
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -87,6 +105,12 @@ function AuthPage() {
       return;
     }
     try {
+      // 1-device license lock: block second devices before anything loads.
+      const allowed = await verifyDeviceLock();
+      if (!allowed) {
+        setLoading(false);
+        return;
+      }
       const me = await getMe();
       navigate({ href: signedInDestination(me.mustChangePassword), replace: true });
     } catch {
@@ -124,6 +148,10 @@ function AuthPage() {
     }
     toast.success("Account created — let's set up your company");
     navigate({ to: "/setup", replace: true });
+  }
+
+  if (lock) {
+    return <LicenseLockScreen message={lock.message ?? "Access blocked by license security"} onSignOut={() => undefined} />;
   }
 
   return (
