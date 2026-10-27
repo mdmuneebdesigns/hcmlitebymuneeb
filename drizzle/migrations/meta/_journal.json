@@ -15,6 +15,13 @@
       "when": 1793036131051,
       "tag": "0001_tighten_reference_table_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793127572213,
+      "tag": "0002_enterprise_leads_and_demo_events",
+      "breakpoints": true
     }
   ]
 }
