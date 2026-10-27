@@ -259,6 +259,37 @@ function SetupPage() {
               <CardDescription>These rules decide attendance and leave behavior</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <Label htmlFor="licenseKey" className="flex items-center gap-2">
+                  <KeyRound className="h-4 w-4" /> License key (1-device activation)
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="licenseKey"
+                    value={licenseKey}
+                    onChange={(e) => {
+                      setLicenseKey(e.target.value.toUpperCase());
+                      setLicensePlan(null);
+                      setLicenseError(null);
+                    }}
+                    placeholder="HCM-30D-XXXXXXXX or HCM-LIFE-XXXXXXXX"
+                    className="font-mono"
+                  />
+                  <Button type="button" variant="outline" onClick={validateLicense} disabled={validating || !licenseKey.trim()}>
+                    {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                    Validate
+                  </Button>
+                </div>
+                {licensePlan ? (
+                  <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    ✓ {licensePlan === "master" ? `Owner master key (${MASTER_SETUP_KEY}) — lifetime access` : PLAN_LABELS[licensePlan]} verified
+                  </p>
+                ) : null}
+                {licenseError ? <p className="text-xs font-medium text-destructive">{licenseError}</p> : null}
+                <p className="text-xs text-muted-foreground">
+                  One license = one device. Don't have a key? Contact Admin on WhatsApp (+92-3140263346).
+                </p>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="companyName">Company name</Label>
                 <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Acme Pvt Ltd" />
