@@ -213,16 +213,16 @@ type Status = "idle" | "sending" | "sent";
  * “Book an Enterprise Demo & Custom Deployment” section. Every submission is
  * stored in the enterprise_leads table FIRST (server-side), then forwarded to
  * the owner's FormSubmit inbox from the server — so browser/iframe network
- * issues can never show a false "Send failed" or lose a lead.
+ * issues can never show a false "Send failed" or lose a lead. The submit path
+ * is fast: one server call (DB insert + bounded 8s email attempt), no page
+ * navigation.
  */
 export function EnterpriseDemoSection() {
   const submitLead = useServerFn(submitEnterpriseLead);
   const [status, setStatus] = useState<Status>("idle");
   const [showModal, setShowModal] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  // Native FormSubmit form — a real browser POST (not AJAX) so FormSubmit
-  // reliably delivers/activates; redirects back with ?success=true.
-  const nativeFormRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -245,18 +245,6 @@ export function EnterpriseDemoSection() {
     form.company.trim().length > 1 &&
     form.message.trim().length > 5;
 
-  // First visit back from FormSubmit (?success=true) → show the success modal.
-  // The redirect target is set after mount (SSR-safe, no hydration mismatch).
-  const [nextUrl, setNextUrl] = useState("");
-  useEffect(() => {
-    setNextUrl(window.location.origin + "/welcome?success=true");
-    if (new URLSearchParams(window.location.search).get("success") === "true") {
-      setShowModal(true);
-      setStatus("sent");
-      document.getElementById("enterprise")?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, []);
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     // Honeypot: bots fill it, humans never see it — pretend success silently.
@@ -266,9 +254,12 @@ export function EnterpriseDemoSection() {
       return;
     }
     setStatus("sending");
-    // 1. Store the lead in the database first — a lead is never lost.
+    setSubmitError(null);
+    // Store the lead in the database first — a lead is never lost. The server
+    // fn also forwards to the owner's FormSubmit inbox (bounded 8s attempt), so
+    // the whole submit stays fast and no browser navigation is needed.
     try {
-      await submitLead({
+      const res = await submitLead({
         data: {
           fullName: form.name,
           email: form.email,
@@ -280,12 +271,17 @@ export function EnterpriseDemoSection() {
           _honey: honey,
         },
       });
+      if (res.stored) {
+        setStatus("sent");
+        setShowModal(true);
+      } else {
+        setStatus("idle");
+        setSubmitError(res.error);
+      }
     } catch {
-      // Storage hiccup must not block delivery — the native POST below carries it.
+      setStatus("idle");
+      setSubmitError("Aap ki request save nahi ho saki — WhatsApp ya email par seedha rabta karein.");
     }
-    // 2. Native browser POST to FormSubmit (forces delivery/activation) which
-    //    redirects to /welcome?success=true — the success modal shows there.
-    nativeFormRef.current?.submit();
   }
 
   const field =
@@ -419,7 +415,7 @@ export function EnterpriseDemoSection() {
               >
                 {status === "sending" ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Logging your inquiry…
+                    <Loader2 className="h-4 w-4 animate-spin" /> Submitting…
                   </>
                 ) : (
                   <>
@@ -427,9 +423,12 @@ export function EnterpriseDemoSection() {
                   </>
                 )}
               </Button>
+              {submitError && (
+                <p className="text-xs font-medium text-destructive">{submitError}</p>
+              )}
               <p className="text-xs text-muted-foreground">
-                Har submission database mein log hoti hai aur Muhammad Muneeb ko deliver hoti hai — WhatsApp pe fastest
-                response milta hai.
+                Aap ki inquiry secure save hoti hai aur seedha Muhammad Muneeb tak pohnchti hai —
+                WhatsApp par reply sab se fastest hota hai.
               </p>
             </div>
           </form>
