@@ -76,3 +76,9 @@ Database is intentionally EMPTY (fresh /setup state for judging — zero dummy d
 - [x] Key format `HCM-30D-XXXXXXXX` / `HCM-LIFE-XXXXXXXX` / `HCM-TRIAL-XXXXXXXX` (unambiguous alphabet, no 0/O/1/I/L); auto-expiry on sight; `formatDaysLeft` badges (♾️ lifetime / N days left / expired)
 - [x] Master key `MUNEEB-VIP` is owner-only — `validateLicenseKey` and `completeFirstRunSetup` reject it for any account whose email is not `mdmuneebdesigns@gmail.com`
 - [x] E2E verified: fresh signup → /setup wrong key rejected → valid key verified → company created → dashboard; 2nd-device sign-in shows lock screen; super-admin unlock, generate (lifetime + trial), companies tab with ban button; TypeScript clean, 83/83 tests, build OK; test data wiped
+
+## Email Delivery Fix + Admin Guide PDF (2026-10-28; complete)
+- [x] FormSubmit email root-cause fix in `src/lib/leads.functions.ts`: server-side fetch now sends `Referer: https://hcmlitebymuneeb.lovable.app/` (FormSubmit rejects server POSTs without it — "open this page through a web server"), plus User-Agent, JSON `success:"true"` verification (bare HTTP 200 no longer counts as delivered), and one retry after 1.5s
+- [x] E2E verified via Playwright: booking form submit → success modal, no "email delivery pending" toast (FormSubmit accepted from workerd runtime); QA test lead deleted afterwards
+- [x] FormSubmit activation reminder: owner must click the first "Activate Form" email link once; guaranteed fallback = Super Admin → Leads tab (DB-stored)
+- [x] `/mnt/documents/HCM_Lite_Admin_User_Guide.pdf` — 10-page Roman Urdu step-by-step guide (pages/URLs, setup wizard, admin/HR/employee login, temp passwords, demo credentials, super-admin PIN + license generation, per-page click-by-click, email/booking system, security, quick-reference credentials card); visual QA on all pages

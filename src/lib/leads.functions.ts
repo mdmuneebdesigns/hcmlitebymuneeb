@@ -71,32 +71,45 @@ export const submitEnterpriseLead = createServerFn({ method: "POST" })
 
     // Best-effort email delivery — storage already succeeded, so this failure
     // must never surface as a lost lead.
+    // FormSubmit rejects server-originated POSTs without a Referer header
+    // ("open this page through a web server"), so we send one explicitly and
+    // only trust its JSON `success:"true"` reply — a bare HTTP 200 is not enough.
     let emailed = false;
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 15_000);
-      const res = await fetch(FORMSUBMIT_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          name: data.fullName,
-          email: data.email,
-          phone: data.phone,
-          company: data.companyName,
-          team_size: data.teamSize,
-          inquiry_type: data.inquiryType,
-          selected_plan: data.selectedPlan || "—",
-          message: data.message,
-          _subject: "🚀 New HCM Lite Enterprise Demo / License Inquiry!",
-          _template: "table",
-          _captcha: "false",
-        }),
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-      emailed = res.ok;
-    } catch {
-      emailed = false;
+    const payload = {
+      name: data.fullName,
+      email: data.email,
+      phone: data.phone,
+      company: data.companyName,
+      team_size: data.teamSize,
+      inquiry_type: data.inquiryType,
+      selected_plan: data.selectedPlan || "—",
+      message: data.message,
+      _subject: "🚀 New HCM Lite Enterprise Demo / License Inquiry!",
+      _template: "table",
+      _captcha: "false",
+    };
+    for (let attempt = 0; attempt < 2 && !emailed; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 15_000);
+        const res = await fetch(FORMSUBMIT_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Referer: "https://hcmlitebymuneeb.lovable.app/",
+            "User-Agent": "Mozilla/5.0 (compatible; HCM-Lite/1.0)",
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        const body = (await res.json().catch(() => null)) as { success?: string } | null;
+        emailed = res.ok && body?.success === "true";
+      } catch {
+        emailed = false;
+      }
+      if (!emailed && attempt === 0) await new Promise((r) => setTimeout(r, 1_500));
     }
 
     return { stored: true, emailed };
