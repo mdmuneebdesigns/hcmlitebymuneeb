@@ -44,9 +44,13 @@ function secureRandomChar(): string {
 }
 
 /** e.g. HCM-30D-K7QX9M2P (8 secure random chars; inject `random` only in tests). */
-export function generateLicenseKey(plan: LicensePlan, random: () => number = secureRandomChar): string {
+export function generateLicenseKey(plan: LicensePlan, random?: () => number): string {
   let suffix = "";
-  for (let i = 0; i < 8; i++) suffix += KEY_ALPHABET[Math.floor(random() * KEY_ALPHABET.length)];
+  if (random) {
+    for (let i = 0; i < 8; i++) suffix += KEY_ALPHABET[Math.floor(random() * KEY_ALPHABET.length)];
+  } else {
+    for (let i = 0; i < 8; i++) suffix += secureRandomChar();
+  }
   return `${PLAN_PREFIX[plan]}-${suffix}`;
 }
 
