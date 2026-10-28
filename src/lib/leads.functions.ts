@@ -33,7 +33,7 @@ export const submitEnterpriseLead = createServerFn({ method: "POST" })
     }
     const result = validateLead(input);
     if (!result.ok) throw new Error(result.error);
-    return result.value;
+    return { ...result.value, _skipEmail: input._skipEmail === true };
   })
   .handler(async ({ data }): Promise<LeadSubmitResult> => {
     if ("_bot" in data) return { stored: true, emailed: false };
@@ -68,6 +68,10 @@ export const submitEnterpriseLead = createServerFn({ method: "POST" })
     if (error) {
       return { stored: false, error: "Your inquiry could not be logged. Please email " + OWNER_EMAIL + " directly." };
     }
+
+    // The booking form passes _skipEmail when the browser itself delivers the
+    // FormSubmit POST into a hidden iframe (parallel, never blocks the UI).
+    if (data._skipEmail) return { stored: true, emailed: false };
 
     // Best-effort email delivery — storage already succeeded, so this failure
     // must never surface as a lost lead. Single bounded attempt (8s cap) so the
