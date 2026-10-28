@@ -246,7 +246,10 @@ export function EnterpriseDemoSection() {
     form.message.trim().length > 5;
 
   // First visit back from FormSubmit (?success=true) → show the success modal.
+  // The redirect target is set after mount (SSR-safe, no hydration mismatch).
+  const [nextUrl, setNextUrl] = useState("");
   useEffect(() => {
+    setNextUrl(window.location.origin + "/welcome?success=true");
     if (new URLSearchParams(window.location.search).get("success") === "true") {
       setShowModal(true);
       setStatus("sent");
