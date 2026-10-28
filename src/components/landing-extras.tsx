@@ -454,7 +454,7 @@ export function EnterpriseDemoSection() {
             <input
               type="hidden"
               name="_next"
-              value={typeof window !== "undefined" ? window.location.origin + "/welcome?success=true" : "/welcome?success=true"}
+              value={nextUrl}
             />
           </form>
         </div>
