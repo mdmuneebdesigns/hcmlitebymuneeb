@@ -119,7 +119,7 @@ export const validateLicenseKey = createServerFn({ method: "POST" })
     if (row.bound_device_hash && data.deviceHash && row.bound_device_hash !== data.deviceHash) {
       return {
         ok: false,
-        error: `This license is already bound to another device (${row.bound_device_info ?? "unknown"}). Sharing licenses across devices is prohibited.`,
+        error: "Unauthorized Device: This license is already bound to another device. Contact Admin.",
       };
     }
 

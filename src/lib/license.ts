@@ -31,8 +31,20 @@ const PLAN_PREFIX: Record<LicensePlan, string> = {
   trial: "HCM-TRIAL",
 };
 
-/** e.g. HCM-30D-K7QX9M2P */
-export function generateLicenseKey(plan: LicensePlan, random: () => number = Math.random): string {
+/** Cryptographically secure default source — never Math.random in production. */
+function secureRandomChar(): string {
+  const buf = new Uint32Array(1);
+  const cryptoObj = globalThis.crypto;
+  if (cryptoObj && typeof cryptoObj.getRandomValues === "function") {
+    cryptoObj.getRandomValues(buf);
+  } else {
+    buf[0] = Math.floor(Math.random() * 4294967296);
+  }
+  return KEY_ALPHABET[buf[0] % KEY_ALPHABET.length];
+}
+
+/** e.g. HCM-30D-K7QX9M2P (8 secure random chars; inject `random` only in tests). */
+export function generateLicenseKey(plan: LicensePlan, random: () => number = secureRandomChar): string {
   let suffix = "";
   for (let i = 0; i < 8; i++) suffix += KEY_ALPHABET[Math.floor(random() * KEY_ALPHABET.length)];
   return `${PLAN_PREFIX[plan]}-${suffix}`;
