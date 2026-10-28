@@ -432,30 +432,6 @@ export function EnterpriseDemoSection() {
               </p>
             </div>
           </form>
-
-          {/* Hidden native FormSubmit form — the browser does the real POST. */}
-          <form
-            ref={nativeFormRef}
-            action="https://formsubmit.co/mdmuneebdesigns@gmail.com"
-            method="POST"
-            className="hidden"
-            aria-hidden="true"
-          >
-            <input type="hidden" name="name" value={form.name} />
-            <input type="hidden" name="email" value={form.email} />
-            <input type="hidden" name="phone" value={form.phone} />
-            <input type="hidden" name="company" value={form.company} />
-            <input type="hidden" name="team_size" value={form.team_size} />
-            <input type="hidden" name="inquiry_type" value={form.inquiry_type} />
-            <input type="hidden" name="message" value={form.message} />
-            <input type="hidden" name="_subject" value="New HCM Lite License Inquiry!" />
-            <input type="hidden" name="_captcha" value="false" />
-            <input
-              type="hidden"
-              name="_next"
-              value={nextUrl}
-            />
-          </form>
         </div>
       </div>
 
@@ -470,6 +446,7 @@ export function EnterpriseDemoSection() {
               onClick={() => {
                 setShowModal(false);
                 setStatus("idle");
+                setSubmitError(null);
                 setForm({
                   name: "",
                   email: "",
