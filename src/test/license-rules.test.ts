@@ -36,6 +36,11 @@ describe("license key generation", () => {
     // Owner master key is always format-valid.
     expect(isValidLicenseKeyFormat(MASTER_SETUP_KEY)).toBe(true);
   });
+
+  it("generates unique keys from the secure-random default (no injected source)", () => {
+    const keys = new Set(Array.from({ length: 200 }, () => generateLicenseKey("monthly_30d")));
+    expect(keys.size).toBe(200);
+  });
 });
 
 describe("license expiry engine", () => {

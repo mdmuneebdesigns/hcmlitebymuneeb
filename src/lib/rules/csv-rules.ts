@@ -160,10 +160,16 @@ function splitCsvLine(line: string): string[] {
   return out;
 }
 
+/** Neutralize spreadsheet formula injection: a cell that starts with =, +, -, @, tab or CR
+ *  is prefixed with a single quote so Excel/Sheets treat it as text, never a formula. */
+export function sanitizeCsvCell(value: string): string {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
 /** Build a CSV string for export. */
 export function toCsv(rows: Array<Record<string, string | number | null>>): string {
   const escape = (v: string | number | null) => {
-    const s = v === null || v === undefined ? "" : String(v);
+    const s = sanitizeCsvCell(v === null || v === undefined ? "" : String(v));
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const lines = [CSV_HEADERS.join(",")];

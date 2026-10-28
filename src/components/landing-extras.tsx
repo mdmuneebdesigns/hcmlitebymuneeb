@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Bot, Building2, CheckCircle2, Loader2, Mail, MessageCircle, Phone, Send, ShoppingCart, Sparkles, X } from "lucide-react";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -221,6 +220,9 @@ export function EnterpriseDemoSection() {
   const [status, setStatus] = useState<Status>("idle");
   const [showModal, setShowModal] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  // Native FormSubmit form — a real browser POST (not AJAX) so FormSubmit
+  // reliably delivers/activates; redirects back with ?success=true.
+  const nativeFormRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -243,6 +245,18 @@ export function EnterpriseDemoSection() {
     form.company.trim().length > 1 &&
     form.message.trim().length > 5;
 
+  // First visit back from FormSubmit (?success=true) → show the success modal.
+  // The redirect target is set after mount (SSR-safe, no hydration mismatch).
+  const [nextUrl, setNextUrl] = useState("");
+  useEffect(() => {
+    setNextUrl(window.location.origin + "/welcome?success=true");
+    if (new URLSearchParams(window.location.search).get("success") === "true") {
+      setShowModal(true);
+      setStatus("sent");
+      document.getElementById("enterprise")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     // Honeypot: bots fill it, humans never see it — pretend success silently.
@@ -252,8 +266,9 @@ export function EnterpriseDemoSection() {
       return;
     }
     setStatus("sending");
+    // 1. Store the lead in the database first — a lead is never lost.
     try {
-      const res = await submitLead({
+      await submitLead({
         data: {
           fullName: form.name,
           email: form.email,
@@ -265,18 +280,12 @@ export function EnterpriseDemoSection() {
           _honey: honey,
         },
       });
-      if (!res.stored) throw new Error(res.error);
-      // Stored in the database — success modal shows regardless of email relay.
-      setShowModal(true);
-      setStatus("sent");
-      if (!res.emailed) {
-        toast.success("✅ Inquiry logged — email delivery pending, WhatsApp par fastest response.");
-      }
-    } catch (err) {
-      setStatus("idle");
-      const msg = err instanceof Error ? err.message : "Submission failed";
-      toast.error(msg + " — ya WhatsApp par Rabta karein: " + CONTACT_WHATSAPP_DISPLAY);
+    } catch {
+      // Storage hiccup must not block delivery — the native POST below carries it.
     }
+    // 2. Native browser POST to FormSubmit (forces delivery/activation) which
+    //    redirects to /welcome?success=true — the success modal shows there.
+    nativeFormRef.current?.submit();
   }
 
   const field =
@@ -424,10 +433,34 @@ export function EnterpriseDemoSection() {
               </p>
             </div>
           </form>
+
+          {/* Hidden native FormSubmit form — the browser does the real POST. */}
+          <form
+            ref={nativeFormRef}
+            action="https://formsubmit.co/mdmuneebdesigns@gmail.com"
+            method="POST"
+            className="hidden"
+            aria-hidden="true"
+          >
+            <input type="hidden" name="name" value={form.name} />
+            <input type="hidden" name="email" value={form.email} />
+            <input type="hidden" name="phone" value={form.phone} />
+            <input type="hidden" name="company" value={form.company} />
+            <input type="hidden" name="team_size" value={form.team_size} />
+            <input type="hidden" name="inquiry_type" value={form.inquiry_type} />
+            <input type="hidden" name="message" value={form.message} />
+            <input type="hidden" name="_subject" value="New HCM Lite License Inquiry!" />
+            <input type="hidden" name="_captcha" value="false" />
+            <input
+              type="hidden"
+              name="_next"
+              value={nextUrl}
+            />
+          </form>
         </div>
       </div>
 
-      {/* Emerald success modal — shown as soon as the lead is stored. */}
+      {/* Emerald success modal — shown when the lead is stored / on return. */}
       {showModal && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true">
           <div className="relative w-full max-w-md rounded-2xl border border-emerald-500/40 bg-card p-8 text-center shadow-2xl">

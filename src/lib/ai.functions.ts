@@ -5,6 +5,7 @@ import type { AuthedContext } from "@/lib/rbac.server";
 import { requireAnyRole } from "@/lib/rbac.server";
 import { AI_TOOLS } from "@/lib/ai.tools.server";
 import { getOwnEmployeeId } from "@/lib/helpers.server";
+import { callGemini } from "@/lib/gemini.server";
 
 const MODEL = "openai/gpt-6-astra" as const;
 const TIMEOUT_MS = 15_000;
@@ -47,6 +48,23 @@ function rateLimited(userId: string): boolean {
   hits.push(now);
   rateMap.set(userId, hits);
   return false;
+}
+
+// ---------- Prompt-injection / impersonation guard ----------
+// User-supplied text is neutralized before it reaches any model: role-override
+// and fake-system-message attempts become inert "[blocked]" markers.
+const INJECTION_PATTERNS: Array<[RegExp, string]> = [
+  [/\b(?:ignore|disregard|forget)\s+(?:all\s+)?(?:the\s+)?(?:previous|prior|above|earlier|earlier\s+instructions|any\s+previous)\s+(?:instructions?|prompts?|rules?|messages?)/gi, "[blocked]"],
+  [/\b(?:system|developer|assistant)\s*(?:prompt|message)\s*:/gi, "[blocked]"],
+  [/\byou\s+are\s+now\s+(?:a|an|the)\b/gi, "[blocked]"],
+  [/\bnew\s+(?:instructions?|rules?|system\s+prompt)\s*:/gi, "[blocked]"],
+  [/\bact\s+as\s+(?:if\s+you\s+are\s+)?(?:the\s+)?(?:admin|hr|owner|system)\b/gi, "[blocked]"],
+];
+
+export function sanitizeUserText(text: string): string {
+  let out = text;
+  for (const [re, sub] of INJECTION_PATTERNS) out = out.replace(re, sub);
+  return out;
 }
 
 function toolSchemas() {
@@ -142,7 +160,7 @@ export const aiChat = createServerFn({ method: "POST" })
 
     const input: unknown[] = data.messages
       .slice(-12)
-      .map((m) => ({ role: m.role, content: [{ type: "input_text", text: m.content }] }));
+      .map((m) => ({ role: m.role, content: [{ type: "input_text", text: sanitizeUserText(m.content) }] }));
 
     const started = Date.now();
     const toolCallsMade: { name: string; args: unknown }[] = [];
@@ -369,8 +387,9 @@ HCM Lite product knowledge (ground truth for website answers — never invent an
   sent by the owner via WhatsApp.
 - Owner contacts: WhatsApp / PK Desk +92-314-0263346 (WhatsApp + calls), US Desk +1 (775) 312-8079
   (WhatsApp only), email mdmuneebdesigns@gmail.com. Booking form: "Enterprise Demo" section on this page.
-- AI: the in-app assistant and this website assistant are powered by OpenAI's GPT (latest model) through
-  the Lovable AI Gateway; in-app answers are role-scoped and logged, and carry an "AI-generated" badge.
+- AI: the in-app assistant and this website assistant are powered by Google Gemini (latest low-cost model,
+  with the Lovable AI Gateway as automatic fallback); in-app answers are role-scoped and logged, and carry
+  an "AI-generated" badge.
 `.trim();
 
 export const siteChat = createServerFn({ method: "POST" })
@@ -403,23 +422,37 @@ export const siteChat = createServerFn({ method: "POST" })
       SITE_KNOWLEDGE,
     ].join("\n");
 
-    const input: unknown[] = data.messages
+    // RAG-style grounding: the product knowledge above is the retrieval context;
+    // user turns are sanitized against prompt-injection / impersonation attempts.
+    const turns = data.messages
       .slice(-10)
-      .map((m) => ({ role: m.role, content: [{ type: "input_text", text: m.content }] }));
+      .map((m) => ({ role: m.role, content: sanitizeUserText(m.content) }));
 
     const started = Date.now();
     let reply = "";
     let success = true;
-    try {
-      const response = await callModel(input, instructions, false);
-      reply = extractText(response) || "Maaf kijiye, jawab nahi ban saka — dobara poochein ya WhatsApp par rabta karein.";
-    } catch (e) {
-      success = false;
-      reply =
-        e instanceof GatewayError && e.code === "rate_limited"
-          ? "The AI service is busy right now — please try again in a moment, or WhatsApp us."
-          : "The assistant is unavailable right now. Please try again shortly, or WhatsApp us at +92-314-0263346.";
-      console.error("[siteChat]", e);
+
+    // Primary: Google Gemini (owner-provided key, low-cost flash model).
+    // Fallback: Lovable AI Gateway when the key is missing or the call fails.
+    const geminiReply = await callGemini(instructions, turns);
+    if (geminiReply) {
+      reply = geminiReply;
+    } else {
+      const input: unknown[] = turns.map((m) => ({
+        role: m.role,
+        content: [{ type: "input_text", text: m.content }],
+      }));
+      try {
+        const response = await callModel(input, instructions, false);
+        reply = extractText(response) || "Maaf kijiye, jawab nahi ban saka — dobara poochein ya WhatsApp par rabta karein.";
+      } catch (e) {
+        success = false;
+        reply =
+          e instanceof GatewayError && e.code === "rate_limited"
+            ? "The AI service is busy right now — please try again in a moment, or WhatsApp us."
+            : "The assistant is unavailable right now. Please try again shortly, or WhatsApp us at +92-314-0263346.";
+        console.error("[siteChat]", e);
+      }
     }
 
     // Best-effort logging (user_id nullable for public visitors).

@@ -97,4 +97,17 @@ describe("CSV parsing and export", () => {
     expect(lines[0]).toContain("basic_salary");
     expect(lines[1]).toContain("EMP-1");
   });
+
+  it("neutralizes spreadsheet formula injection in exported cells", () => {
+    const csv = toCsv([
+      { employee_code: "EMP-2", full_name: "=HYPERLINK(\"http://evil\")", basic_salary: "+SUM(A1)" },
+      { employee_code: "EMP-3", full_name: "@cmd|' /C calc", basic_salary: "-2+3" },
+    ]);
+    expect(csv).toContain("'=HYPERLINK");
+    expect(csv).toContain("'+SUM(A1)");
+    expect(csv).toContain("'@cmd|' /C calc");
+    expect(csv).toContain("'-2+3");
+    // Ordinary text stays untouched.
+    expect(csv).toContain("EMP-2");
+  });
 });
