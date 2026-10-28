@@ -249,6 +249,13 @@ export function EnterpriseDemoSection() {
     form.company.trim().length > 1 &&
     form.message.trim().length > 5;
 
+  // Redirect target for the hidden-iframe FormSubmit POST — set after mount
+  // (SSR-safe, no hydration mismatch).
+  const [nextUrl, setNextUrl] = useState("");
+  useEffect(() => {
+    setNextUrl(window.location.origin + "/welcome?success=true");
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     // Honeypot: bots fill it, humans never see it — pretend success silently.
@@ -259,9 +266,9 @@ export function EnterpriseDemoSection() {
     }
     setStatus("sending");
     setSubmitError(null);
-    // Store the lead in the database first — a lead is never lost. The server
-    // fn also forwards to the owner's FormSubmit inbox (bounded 8s attempt), so
-    // the whole submit stays fast and no browser navigation is needed.
+    // Store the lead in the database first — a lead is never lost. _skipEmail
+    // keeps the server call fast; the hidden-iframe browser POST below
+    // delivers the email in parallel without blocking the UI.
     try {
       const res = await submitLead({
         data: {
@@ -273,11 +280,13 @@ export function EnterpriseDemoSection() {
           inquiryType: form.inquiry_type,
           message: form.message,
           _honey: honey,
+          _skipEmail: true,
         },
       });
       if (res.stored) {
         setStatus("sent");
         setShowModal(true);
+        nativeFormRef.current?.submit();
       } else {
         setStatus("idle");
         setSubmitError(res.error);
