@@ -16,7 +16,7 @@ const OWNER_EMAIL = "mdmuneebdesigns@gmail.com";
  * preview can never block or lose a lead.
  */
 export const submitEnterpriseLead = createServerFn({ method: "POST" })
-  .inputValidator((input: LeadInput & { _honey?: string }) => {
+  .inputValidator((input: LeadInput & { _honey?: string; _skipEmail?: boolean }) => {
     // Honeypot: bots fill it, humans never see it — pretend success silently.
     if (typeof input._honey === "string" && input._honey.trim().length > 0) {
       return {
