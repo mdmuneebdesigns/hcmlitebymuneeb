@@ -223,6 +223,10 @@ export function EnterpriseDemoSection() {
   const [showModal, setShowModal] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  // Native FormSubmit form — a real browser POST into a hidden iframe so the
+  // owner's email is delivered in the background, without ever navigating the
+  // page or slowing the submit button down.
+  const nativeFormRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
