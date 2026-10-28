@@ -16,7 +16,7 @@ const OWNER_EMAIL = "mdmuneebdesigns@gmail.com";
  * preview can never block or lose a lead.
  */
 export const submitEnterpriseLead = createServerFn({ method: "POST" })
-  .inputValidator((input: LeadInput & { _honey?: string }) => {
+  .inputValidator((input: LeadInput & { _honey?: string; _skipEmail?: boolean }) => {
     // Honeypot: bots fill it, humans never see it — pretend success silently.
     if (typeof input._honey === "string" && input._honey.trim().length > 0) {
       return {
@@ -33,7 +33,7 @@ export const submitEnterpriseLead = createServerFn({ method: "POST" })
     }
     const result = validateLead(input);
     if (!result.ok) throw new Error(result.error);
-    return result.value;
+    return { ...result.value, _skipEmail: input._skipEmail === true };
   })
   .handler(async ({ data }): Promise<LeadSubmitResult> => {
     if ("_bot" in data) return { stored: true, emailed: false };
@@ -69,8 +69,14 @@ export const submitEnterpriseLead = createServerFn({ method: "POST" })
       return { stored: false, error: "Your inquiry could not be logged. Please email " + OWNER_EMAIL + " directly." };
     }
 
+    // The booking form passes _skipEmail when the browser itself delivers the
+    // FormSubmit POST into a hidden iframe (parallel, never blocks the UI).
+    if (data._skipEmail) return { stored: true, emailed: false };
+
     // Best-effort email delivery — storage already succeeded, so this failure
-    // must never surface as a lost lead.
+    // must never surface as a lost lead. Single bounded attempt (8s cap) so the
+    // submit button never hangs: FormSubmit normally replies in 1–2s, and the
+    // row in enterprise_leads is the durable record either way.
     // FormSubmit rejects server-originated POSTs without a Referer header
     // ("open this page through a web server"), so we send one explicitly and
     // only trust its JSON `success:"true"` reply — a bare HTTP 200 is not enough.
@@ -88,28 +94,25 @@ export const submitEnterpriseLead = createServerFn({ method: "POST" })
       _template: "table",
       _captcha: "false",
     };
-    for (let attempt = 0; attempt < 2 && !emailed; attempt++) {
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 15_000);
-        const res = await fetch(FORMSUBMIT_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Referer: "https://hcmlitebymuneeb.lovable.app/",
-            "User-Agent": "Mozilla/5.0 (compatible; HCM-Lite/1.0)",
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-        clearTimeout(timer);
-        const body = (await res.json().catch(() => null)) as { success?: string } | null;
-        emailed = res.ok && body?.success === "true";
-      } catch {
-        emailed = false;
-      }
-      if (!emailed && attempt === 0) await new Promise((r) => setTimeout(r, 1_500));
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8_000);
+      const res = await fetch(FORMSUBMIT_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Referer: "https://hcmlitebymuneeb.lovable.app/",
+          "User-Agent": "Mozilla/5.0 (compatible; HCM-Lite/1.0)",
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      const body = (await res.json().catch(() => null)) as { success?: string } | null;
+      emailed = res.ok && body?.success === "true";
+    } catch {
+      emailed = false;
     }
 
     return { stored: true, emailed };
