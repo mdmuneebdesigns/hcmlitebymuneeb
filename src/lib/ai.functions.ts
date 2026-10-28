@@ -49,6 +49,23 @@ function rateLimited(userId: string): boolean {
   return false;
 }
 
+// ---------- Prompt-injection / impersonation guard ----------
+// User-supplied text is neutralized before it reaches any model: role-override
+// and fake-system-message attempts become inert "[blocked]" markers.
+const INJECTION_PATTERNS: Array<[RegExp, string]> = [
+  [/\b(?:ignore|disregard|forget)\s+(?:all\s+)?(?:the\s+)?(?:previous|prior|above|earlier|earlier\s+instructions|any\s+previous)\s+(?:instructions?|prompts?|rules?|messages?)/gi, "[blocked]"],
+  [/\b(?:system|developer|assistant)\s*(?:prompt|message)\s*:/gi, "[blocked]"],
+  [/\byou\s+are\s+now\s+(?:a|an|the)\b/gi, "[blocked]"],
+  [/\bnew\s+(?:instructions?|rules?|system\s+prompt)\s*:/gi, "[blocked]"],
+  [/\bact\s+as\s+(?:if\s+you\s+are\s+)?(?:the\s+)?(?:admin|hr|owner|system)\b/gi, "[blocked]"],
+];
+
+export function sanitizeUserText(text: string): string {
+  let out = text;
+  for (const [re, sub] of INJECTION_PATTERNS) out = out.replace(re, sub);
+  return out;
+}
+
 function toolSchemas() {
   return AI_TOOLS.map((t) => ({
     type: "function" as const,
@@ -142,7 +159,7 @@ export const aiChat = createServerFn({ method: "POST" })
 
     const input: unknown[] = data.messages
       .slice(-12)
-      .map((m) => ({ role: m.role, content: [{ type: "input_text", text: m.content }] }));
+      .map((m) => ({ role: m.role, content: [{ type: "input_text", text: sanitizeUserText(m.content) }] }));
 
     const started = Date.now();
     const toolCallsMade: { name: string; args: unknown }[] = [];
