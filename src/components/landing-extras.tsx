@@ -431,10 +431,34 @@ export function EnterpriseDemoSection() {
               </p>
             </div>
           </form>
+
+          {/* Hidden native FormSubmit form — the browser does the real POST. */}
+          <form
+            ref={nativeFormRef}
+            action="https://formsubmit.co/mdmuneebdesigns@gmail.com"
+            method="POST"
+            className="hidden"
+            aria-hidden="true"
+          >
+            <input type="hidden" name="name" value={form.name} />
+            <input type="hidden" name="email" value={form.email} />
+            <input type="hidden" name="phone" value={form.phone} />
+            <input type="hidden" name="company" value={form.company} />
+            <input type="hidden" name="team_size" value={form.team_size} />
+            <input type="hidden" name="inquiry_type" value={form.inquiry_type} />
+            <input type="hidden" name="message" value={form.message} />
+            <input type="hidden" name="_subject" value="New HCM Lite License Inquiry!" />
+            <input type="hidden" name="_captcha" value="false" />
+            <input
+              type="hidden"
+              name="_next"
+              value={typeof window !== "undefined" ? window.location.origin + "/welcome?success=true" : "/welcome?success=true"}
+            />
+          </form>
         </div>
       </div>
 
-      {/* Emerald success modal — shown as soon as the lead is stored. */}
+      {/* Emerald success modal — shown when the lead is stored / on return. */}
       {showModal && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true">
           <div className="relative w-full max-w-md rounded-2xl border border-emerald-500/40 bg-card p-8 text-center shadow-2xl">
