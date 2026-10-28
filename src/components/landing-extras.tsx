@@ -221,6 +221,9 @@ export function EnterpriseDemoSection() {
   const [status, setStatus] = useState<Status>("idle");
   const [showModal, setShowModal] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  // Native FormSubmit form — a real browser POST (not AJAX) so FormSubmit
+  // reliably delivers/activates; redirects back with ?success=true.
+  const nativeFormRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
