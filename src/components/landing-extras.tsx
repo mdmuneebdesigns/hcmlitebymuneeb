@@ -246,6 +246,15 @@ export function EnterpriseDemoSection() {
     form.company.trim().length > 1 &&
     form.message.trim().length > 5;
 
+  // First visit back from FormSubmit (?success=true) → show the success modal.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("success") === "true") {
+      setShowModal(true);
+      setStatus("sent");
+      document.getElementById("enterprise")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     // Honeypot: bots fill it, humans never see it — pretend success silently.
@@ -255,8 +264,9 @@ export function EnterpriseDemoSection() {
       return;
     }
     setStatus("sending");
+    // 1. Store the lead in the database first — a lead is never lost.
     try {
-      const res = await submitLead({
+      await submitLead({
         data: {
           fullName: form.name,
           email: form.email,
@@ -268,18 +278,12 @@ export function EnterpriseDemoSection() {
           _honey: honey,
         },
       });
-      if (!res.stored) throw new Error(res.error);
-      // Stored in the database — success modal shows regardless of email relay.
-      setShowModal(true);
-      setStatus("sent");
-      if (!res.emailed) {
-        toast.success("✅ Inquiry logged — email delivery pending, WhatsApp par fastest response.");
-      }
-    } catch (err) {
-      setStatus("idle");
-      const msg = err instanceof Error ? err.message : "Submission failed";
-      toast.error(msg + " — ya WhatsApp par Rabta karein: " + CONTACT_WHATSAPP_DISPLAY);
+    } catch {
+      // Storage hiccup must not block delivery — the native POST below carries it.
     }
+    // 2. Native browser POST to FormSubmit (forces delivery/activation) which
+    //    redirects to /welcome?success=true — the success modal shows there.
+    nativeFormRef.current?.submit();
   }
 
   const field =
