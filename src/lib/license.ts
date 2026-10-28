@@ -40,14 +40,14 @@ function secureRandomChar(): string {
   } else {
     buf[0] = Math.floor(Math.random() * 4294967296);
   }
-  return KEY_ALPHABET[buf[0] % KEY_ALPHABET.length];
+  return KEY_ALPHABET[buf[0]! % KEY_ALPHABET.length]!;
 }
 
 /** e.g. HCM-30D-K7QX9M2P (8 secure random chars; inject `random` only in tests). */
 export function generateLicenseKey(plan: LicensePlan, random?: () => number): string {
   let suffix = "";
   if (random) {
-    for (let i = 0; i < 8; i++) suffix += KEY_ALPHABET[Math.floor(random() * KEY_ALPHABET.length)];
+    for (let i = 0; i < 8; i++) suffix += KEY_ALPHABET[Math.floor(random() * KEY_ALPHABET.length)]!;
   } else {
     for (let i = 0; i < 8; i++) suffix += secureRandomChar();
   }
